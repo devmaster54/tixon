@@ -1,0 +1,39 @@
+{% extends 'base.html' %} {% load static %}
+{% load i18n %}
+{% block title %}{% trans "Email verification completed" %}{% endblock %}
+
+{% block content %}
+
+	<div class="success">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-8 col-sm-offset-2">
+					<div class="success-icon">
+						<div class="outer">
+							<div class="middle">
+								{% if not error %}
+								<div class="inner">
+									<img src="{% static 'img/success.png' %}">
+									<h3 class="white">{% trans "SUCCESS" %} !</h3>
+								</div>
+								{% endif %}
+								<div class="alert-text">
+									{% if error %}
+										<h4>{% trans "Link already been used or not valid" %}</h4>
+									{% else %}
+										<h4>{% trans "Email Verification Completed" %}</h4>
+									{% endif %}
+									<a href="{% url 'login' %}" class="btn btn-success">{% trans "Login" %}</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+

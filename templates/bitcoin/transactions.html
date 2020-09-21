@@ -1,0 +1,232 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load transaction_status %}
+{% load tz %}
+{% load i18n %}
+{% block title %}{% trans "Transactions" %}{% endblock %}
+
+{% block extra_styles %}
+      <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+{% endblock %}
+
+
+{% block content %}
+
+  <div class="trans">
+    <div class="container-fluid">
+      <h2 class="Ubuntu mf15">{% trans "Transactions" %}</h2>
+    </div>
+      <div class="row m0">
+        <div class="col-sm-12">
+         <div class="trans-details">          
+            <ul class="nav nav-tabs">             
+              <li class="active "><a data-toggle="tab" href="#home">  <span><i class="far fa-arrow-alt-circle-down"></i> {% trans "Deposit" %} </span> </a></li>
+              <li class=""><a data-toggle="tab" href="#menu1"><span><i class="far fa-share-square"></i> {% trans "Withdrawal" %}</span></a></li>
+            </ul>
+
+            <div class="tab-content">
+              <div id="home" class="tab-pane fade in active">
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="send_table" width="100%">
+                      <thead>
+                        <tr>
+                          <th>{% trans "Date&nbsp;&amp;&nbsp;Time" %}</th>
+                          <th>{% trans "Status" %}</th>
+                          <th>{% trans "Amount(BTC)" %}</th>
+                          <th>{% trans "Transaction Id" %}</th>
+                          <th>{% trans "Blockhash" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                	      {% for transaction in btctransactions %}
+                      		<tr>
+                      			<td>
+                                {% conver_unix_to_datetime transaction.time %}
+                          </td>
+
+                      			<td>{% ifequal transaction.confirmations 0 %}
+                                          {% trans "Unconfirmed" %}
+                                      {% else %}
+                                          {% trans "Confirmed" %}
+                                      {% endifequal %}
+                                  </td>
+                      			<td>{{transaction.amount}}</td>
+                      			<td>{{transaction.txid}}</td>
+                      			<td>{{transaction.blockhash}}</td>
+                      		</tr>
+                		    {% empty %}
+                  		<tr>
+                  			<td colspan="5"> {% trans "No Transactions" %}</td>
+                  		</tr>
+                		    {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="send_table" width="100%">
+                      <thead>
+                        <tr>
+                          <th>{% trans "Date&nbsp;&amp;&nbsp;Time" %}</th>
+                          <th>{% trans "Status" %}</th>
+                          <th>{% trans "Amount(TXCH)" %}</th>
+                          <th>{% trans "Transaction Id" %}</th>
+                          <th>{% trans "Blockhash" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                        {% for transaction in txchtransactions %}
+                          <tr>
+                            <td>
+                                {% conver_unix_to_datetime transaction.time %}
+                          </td>
+
+                            <td>{% ifequal transaction.confirmations 0 %}
+                                          {% trans "Unconfirmed" %}
+                                      {% else %}
+                                          {% trans "Confirmed" %}
+                                      {% endifequal %}
+                                  </td>
+                            <td>{{transaction.amount}}</td>
+                            <td>{{transaction.txid}}</td>
+                            <td>{{transaction.blockhash}}</td>
+                          </tr>
+                        {% empty %}
+                      <tr>
+                        <td colspan="5"> {% trans "No Transactions" %}</td>
+                      </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+              </div>
+              <div id="menu1" class="tab-pane table-responsive fade">
+              <table class="table table-striped table-bordered" id="withdraw_table" width="100%">
+                <thead>
+                  <tr>
+                    <th>{% trans "Date&nbsp;&amp;&nbsp;Time" %}</th>
+                    <th>{% trans "Status" %}</th>
+                  	<th>{% trans "Amount(BTC)" %}</th>
+                    <th>{% trans "Transaction Fees(BTC)" %}</th>
+                  	<th>{% trans "Transaction Id" %}</th>
+                    <th>{% trans "To" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  	{% for send_obj in btcsend_list %}
+        			<tr>
+                <td>
+                {% if send_obj.transaction_id != '' %}
+                  {% get_transaction_date send_obj.transaction_id %}
+                {% else %}
+                  -
+                {% endif %}
+                </td>
+                <td>
+                  {% if send_obj.transaction_id == '' %}
+                    {% trans "Pending" %}
+                  {% else %}
+                    {% ifequal send_obj.transaction_id|get_transaction_status 0 %}
+                        {% trans "Unconfirmed" %}
+                    {% else %}
+                        {% trans "Confirmed" %}
+                    {% endifequal %}
+                  {% endif %}
+                </td>
+        				<td>{{send_obj.amount}}</td>
+                <td>{{send_obj.transaction_fee|default:0}}</td>
+        				<td>{{send_obj.transaction_id|default:"-"}}</td>
+        				<td>
+                  {% if send_obj.transaction_type == 'vault' %} 
+                      Vault
+                  {% else %} 
+                    {{send_obj.transaction_to}} 
+                  {% endif %}    
+                </td>
+        			</tr>
+        			{% empty %}
+        			<tr>
+        				<td colspan="5"> {% trans "No Transactions" %}</td>
+        			</tr>
+        			{% endfor %}
+                </tbody>
+              </table>
+              <table class="table table-striped table-bordered" id="withdraw_table" width="100%">
+                <thead>
+                  <tr>
+                    <th>{% trans "Date&nbsp;&amp;&nbsp;Time" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Amount(TXCH)" %}</th>
+                    <th>{% trans "Transaction Fees(TXCH)" %}</th>
+                    <th>{% trans "Transaction Id" %}</th>
+                    <th>{% trans "To" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    {% for send_obj in txchsend_list %}
+              <tr>
+                <td>
+                {% if send_obj.transaction_id != 'move' %}
+                  {% get_transaction_date send_obj.transaction_id %}
+                {% else %}
+                  -
+                {% endif %}
+                </td>
+                <td>
+                  {% if send_obj.transaction_id == 'move' %}
+                    {% trans "Confirmed" %}
+                  {% else %}
+                    {% ifequal send_obj.transaction_id|get_transaction_status 0 %}
+                        {% trans "Unconfirmed" %}
+                    {% else %}
+                        {% trans "Confirmed" %}
+                    {% endifequal %}
+                  {% endif %}
+                </td>
+                <td>{{send_obj.amount}}</td>
+                <td>{{send_obj.transaction_fee|default:0}}</td>
+                <td>{{send_obj.transaction_id|default:"-"}}</td>
+                <td>
+                  {% if send_obj.transaction_type == 'vault' %} 
+                      Vault
+                  {% else %} 
+                    {{send_obj.transaction_to}} 
+                  {% endif %}    
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5"> {% trans "No Transactions" %}</td>
+              </tr>
+              {% endfor %}
+                </tbody>
+              </table>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock content %}
+
+{% block footer %}
+{% endblock %}
+{% block script %}
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#withdraw_table').DataTable({
+        });
+        $('#send_table').DataTable({
+            "scrollX": true,
+            "fixedHeader": false,
+        } );
+        $('.dataTables_info').parents('.row:first').css({'margin-top':'15px'})
+    } );
+</script>
+{% endblock %}

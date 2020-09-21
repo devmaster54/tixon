@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load i18n %}
+{% block title %}KYC Details{% endblock %}
+
+{% block content %}
+<div class="verify">
+
+
+    <div class="container">
+        <h2 class="Ubuntu">{% trans "Account Info" %}</h2> 
+        <div class="row">
+
+            <div class="col-sm-10 col-sm-offset-1">
+
+
+                <div class="row auth-head">
+
+                    <h3 class="Ubuntu"><b>{% trans "Step 1" %}:</b> {% trans "Profile" %}</h3>
+
+                    <div class="pull-right down-div fa">  </div>
+
+                </div>
+                <div class="row verify-profile">
+
+                    <div class="col-sm-6">
+
+                        <div class="form-group">
+                            <label>{% trans "Full name" %}</label>
+                            <div>{{profile.full_name}}</div>
+                        </div>
+
+                    </div>
+
+                </div>
+    
+                <div class="row upload-document">
+
+                   
+
+                    <h3 class="Ubuntu m50">{% trans "Photo ID" %}</h3>
+
+                    <div class="row m0">
+
+
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>{% trans "Type of document" %}</label>
+
+                                <div class="">{{ kyc.document_type }}</div>
+                            </div>
+
+                            <div class="form-group m40">
+                                <label>{% trans "Front of document" %}</label>
+                                <label for="file-upload" style="border:none;" class="custom-file-upload pd0">
+                                    <div align="center"><img src="{{ kyc.front_page.url }}" width="100%" ></div>
+                                </label>
+
+
+                            </div>
+
+
+
+
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>{% trans "IC/Passport Number" %}</label>
+
+                                <div class="">{{ kyc.document_number}}</div>
+                            </div>
+
+                            <div class="form-group m40">
+                                <label>{% trans "Back of document" %}</label>
+                                <label for="file-upload" style="border:none;" class="custom-file-upload pd0">
+                                    <div align="center"><img src="{{ kyc.back_page.url }}" width="100%" ></div>
+
+                                    <div class="">
+
+                            </div>
+
+                        </div>
+
+
+
+                    </div>
+                    </div>
+
+                <div class="row auth-head">
+
+    <div style="text-align:right; padding:20px;">
+
+        {% if request.user.is_superuser %}
+            {% if user.kyc_verified == 'processing' %}
+                <a href="{% url 'kyc_approve' pk=user.pk %}" style="width:200px" class="btn btn-primary">{% trans "Approve" %}</a>
+            {% endif %}
+            <a href="{% url 'kyc_list' %}" style="width:200px;margin-right:15px;" class="btn btn-success">{% trans "Back To KYC List" %}</a>
+        {% else %}
+            <a href="{% url 'welcome' %}" style="width:200px;margin-right:15px;" class="btn btn-success">{% trans "Back To Dashboard" %}</a>
+        {% endif %}
+    </div>
+
+                </div>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}
+
+{% block footer %}
+    
+{% endblock %}
+
+{% block script %}
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script>
+    $( function() {
+      $( "#datepicker" ).datepicker();
+    } );
+  </script>
+{% endblock %}

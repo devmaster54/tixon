@@ -1,0 +1,131 @@
+
+.error {
+    border: 1px solid #e0e1e4;
+    display: none;
+    margin: 30px 15px 0px 15px;
+    padding-left: 0px;
+    border-left: 0px;
+}
+
+.error .col-xs-2 {    font-size: 36px;
+    color: #f00;
+    border-left: 3px solid;
+    height: 88px;
+    padding-top: 23px;}
+
+.error .col-xs-8 {    line-height: 90px;
+    color: #838383;}
+.otp-message {
+    margin: 15px;
+}
+
+.warning-msg {
+    margin: 0px 15px 15px;
+}
+
+.hidden-doc {
+    display:none;
+}
+.show-doc {
+    display:block;
+}
+
+.img-size {
+    width: 100%;
+    height: 100%;
+}
+.pd0 {
+    padding:0px;
+}
+.pr10 {
+    padding-right:10px !important;
+}
+.btn-upload {
+    /* color: #fff !important; */
+    background-color: #e6e6e6;
+    border-color: #ccc;
+    padding: 10px 25px;
+}
+.mg0 {
+    margin:0px !important;
+}
+
+i.p-relative:hover .info-password {
+    display:block;
+}
+
+.wallet-address-span {
+    padding: 13px;
+    display: inline-block;
+    margin: 5px;
+    background: #e1e1e1;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+input[type='search'] {
+    height:35px !important;
+}
+
+.send_data_table {
+    margin : 15px 0px;
+}
+
+.align-left {
+    text-align: left;
+}
+
+.pr15 {
+    padding-right:15px !important;
+}
+
+.green {
+    color:#0f0 !important;
+}
+
+.red {
+    color:#f00 !important;
+}
+
+.daily-update tbody tr.active-tab {
+    border-left: 3px solid #ff380f;
+}
+
+.daily-update .nav-tabs>li>a {
+    cursor:pointer;
+}
+
+.pb20{
+    padding-bottom:20px !important;
+}
+
+.diaplay-none {
+    display:none !important;
+}
+/*
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+*/
+#index-after-login input[readonly] {
+    background: rgb(52, 53, 54) !important;
+}
+
+#myProgress {
+  width: 100%;
+  background-color: #ddd;
+}
+
+#myBar {
+  height: 15px;
+  background-color: #4CAF50;
+  text-align: center;
+  line-height: 15px;
+  color: white;
+}
+
+.ask-table tbody tr, .bid-table tbody tr {
+    cursor: pointer;
+}

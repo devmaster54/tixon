@@ -1,0 +1,49 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load transaction_status %} 
+{% load i18n %}
+{% block title %}{% trans "Reject KYC Details" %}{% endblock title %}
+
+{% block content %}
+    <div class="send-coin ">
+        <div class="container">
+            <h2 class="Ubuntu mb20">{% trans "Reject KYC Details" %}</h2>
+            <div class="row mb50 send-coin-wrap">
+                <div class="row m0">
+                    <h4 class="m30"> <b>{% trans "KYC Details" %}</b> </h4>
+                    <div class="row m0 wallet-details">
+                        <div class="col-sm-6">
+                            <img class="d-inline-block" src="{% static 'img/bitcoin.png' %}" width="40px">
+                            <p class="d-inline-block mf10"><b>BTC</b></p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="m10 f-medium" ><b>{% trans "User" %}:</b> {{user.get_user_profile.full_name}} {{user.get_user_profile.last_name}}</p>
+                            <p class="m10 f-medium" ><b>{% trans "User Email" %}:</b> {{user.email}}</p>
+                        </div>
+                    </div>
+                    <div class="">
+                        <h4 class="m30"><b>{% trans "FeedBack" %}</b></h4>
+                        <form method="post" action="." >
+                            {% csrf_token %}
+                            <div class="form-group">
+                                 <textarea name="feedback" placeholder="{% trans "Enter Feedback" %}" class="form-control" rows="10" cols="30" style="resize: none;" required></textarea>
+                                 <div class="errorlist">{{feedback_error}}</div>
+                            </div>
+
+                            <div align="right">
+                                <a href="{% url 'welcome' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> {% trans "BACK TO DASHBOARD" %}</a>
+                                <button type="submit" id="submit_amount" class="btn-main btn m20" >  {% trans "CONFIRM REJECT" %} </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+{% endblock script %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load i18n %}
+{% block title %}{% trans "Notifications" %}{% endblock %}
+
+{% block content %}
+<div class="trans">
+	<div class="container">
+		{% if messages %}
+		    <div class="alert alert-success" style="position: relative;">
+		      <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+		    {% for message in messages %}
+		      {{ message }}
+		    {% endfor %}
+		  	</div>
+	    {% endif %}
+		<h2 class="Ubuntu mf15">SGD Wallets</h2>
+		<div class="row m0">
+			<div class="col-sm-12">
+				<div class="trans-details">
+					<ul class="nav nav-tabs" style="padding:10px;">
+			              <li class="pull-right">
+			              		<form class="form-inline">
+							        <input type="text" name="q" value="{{ request.GET.q}}" class="form-control" placeholder="{% trans "Search" %}" style="height:40px;">
+							        <button type="submit" class="btn" style="height:40px;">
+								        {% trans "Search" %}
+								    </button>
+								</form>
+			              </li>
+		            </ul>
+					<div class="tab-content">
+						{% if sgd_wallet_list.0 %}
+						<div class="table-responsive">
+							<table class="table table_template darklinks table-striped table-bordered table-hover" id="timetable">
+								<thead>
+									<tr>
+										<th>User</th>
+										<th>Amount</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+
+									{% for obj in sgd_wallet_list %}
+									<tr>
+										<td>{{obj.user}}</td>
+										<td>{{obj.amount|floatformat:2}}</td>
+										<td><a href="{% url 'coins:update_sgd_wallet' obj.pk %}" class="btn btn-primary">Add Amount</a></td>
+
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						{% else %}
+						<p class="text-center"><b> No Wallet Details found</b></p>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content %}
+
+{% block script %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

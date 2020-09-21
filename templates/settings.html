@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings" %}{% endblock %}
+
+{% block content %}
+   <div class="setting-wrapper">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-10 col-sm-offset-1">
+                    <div class="row user-details">
+                        <div class="col-sm-6 p0">
+                            <div class="row">
+                                <!--<div class="col-sm-3"><img src="{% static 'img/user-img.png' %}" width="80px" height="80px"> </div>-->
+                                <div class="col-sm-9">
+                                    <h4>{{request.user.email}}</h4>
+                                    <p>{{request.user.get_user_profile.full_name}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div align="right" class="col-sm-6 pr15">
+                            <button class="btn btn-verified"> <b> <i class="fas fa-check" style="color: #0fd800;"></i> {% trans "Email Verified" %}</b> </button>
+                            {% if request.user.kyc_verified == 'not-verified' %}
+                                <a href="{% url 'kyc_upload' %}" class="btn btn-verify-account"> <b>{% trans "Verify Account" %}</b></a>
+                            {% elif request.user.kyc_verified == 'processing' %}
+                                <button  class="btn btn-verified"> <b><i class="fas fa-refresh" style="color: #ff370f;"></i>{% trans "Verification In Process" %}</b></button>
+                            {% elif request.user.kyc_verified == 'verified' %}
+                                <button  class="btn btn-verified"> <b><i class="fas fa-check" style="color: #0fd800;"></i> {% trans "Account Verified" %}</b></button>
+                            {% elif request.user.kyc_verified == 'rejected' %}
+                                <button  class="btn btn-verified"> <b><i class="fas fa-close" style="color: red;"></i> {% trans "Account Rejected" %}</b></button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row settings-top">
+                        <div class="bg-grey">
+                            <div class="col-sm-6">
+                                <h2 class="Ubuntu ">{% trans "Security" %}</h2>
+                                <p><b>{% trans "Password" %}</b> <span>{% if request.user.change_password_date %}({% trans "Last changed on" %} {{request.user.change_password_date|date:"d M Y"}}){% endif %}</span></p>
+                            </div>
+                            <div align="right" class="col-sm-6">
+                                <a href="{% url 'password_change' %}" class="btn btn-a">{% trans "Change Password" %}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row settings-top">
+                        <div class="bg-grey">
+                            <div class="col-sm-6">
+                                <h2 class="Ubuntu ">{% trans "Bank Setting" %}</h2>
+                                <p><b>{% trans "Your Bank Accounts" %}</b> </p>
+                            </div>
+                            <div align="right" class="col-sm-6">
+                                <button class="btn add-bank" onclick="addBank()">{% trans "Add New Bank Account" %}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row options-row">
+                        {% for bank_account in bank_accounts %}
+                            <div class="col-sm-8">
+                                <h4><b>{{bank_account.bank_name}}</b></h4>
+                                <p><b> {% if bank_account.verified %} <i class="fas fa-check" style="color: #0fd800;"></i>{% endif %} {{bank_account.verified|yesno:"Verified, Wire money to verify your bank account"}}</b></p>
+                            </div>
+                            <div align="right" class="col-sm-2">
+                                <a href="{% url 'edit_bank_account' bank_account.pk %}" class="btn-disable btn"><i class="fas fa-pencil-alt"></i>{% trans "Edit" %}</a>
+                            </div>
+                            <div align="right" class="col-sm-2">
+                                <button onclick="removeBankAccount('{{bank_account.pk}}')" class="btn-disable btn"><i class="fas fa-trash-alt"></i>{% trans "Remove" %}</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="row settings-top">
+                        <div class="bg-grey">
+                            <div class="col-sm-6">
+                                <h2 class="Ubuntu ">{% trans "Wechat Setting" %}</h2>
+                                <p><b>{% trans "Your Wechat Accounts" %}</b> </p>
+                            </div>
+                            <div align="right" class="col-sm-6">
+                                <button class="btn add-bank" onclick="addWechat()">{% trans "Add Wechat Account" %}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row options-row">
+                        {% for wechat_account in wechat_accounts %}
+                            <div class="col-sm-8">
+                                <h4><b>{{wechat_account.wechat_account}}</b></h4>
+                                <p><b> {% if wechat_account.verified %} <i class="fas fa-check" style="color: #0fd800;"></i>{% endif %} {{wechat_account.verified|yesno:"Verified, Wire money to verify your account"}}</b></p>
+                            </div>
+                            <div align="right" class="col-sm-2">
+                                <a href="{% url 'edit_wechat_account' wechat_account.pk %}" class="btn-disable btn"><i class="fas fa-pencil-alt"></i> {% trans "Edit" %}</a>
+                            </div>
+                            <div align="right" class="col-sm-2">
+                                <button onclick="removeWechatAccount('{{wechat_account.pk}}')" class="btn-disable btn"><i class="fas fa-trash-alt"></i>{% trans "Remove" %}</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="row settings-top">
+                        <div class="bg-grey">
+                            <div class="col-sm-6">
+                                <h2 class="Ubuntu ">{% trans "Alipay Setting" %}</h2>
+                                <p><b>{% trans "Your Alipay Accounts" %}</b> </p>
+                            </div>
+                            <div align="right" class="col-sm-6">
+                                <button class="btn add-bank" onclick="addAlipay()">{% trans "Add Alipay Account" %}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row options-row">
+                        {% for alipay_account in alipay_accounts %}
+                            <div class="col-sm-8">
+                                <h4><b>{{alipay_account.alipay_name}}</b></h4>
+                                <p><b> {% if alipay_account.verified %} <i class="fas fa-check" style="color: #0fd800;"></i>{% endif %} {{alipay_account.verified|yesno:"Verified, Wire money to verify your account"}}</b></p>
+                            </div>
+                            <div align="right" class="col-sm-2">
+                                <a href="{% url 'edit_alipay_account' alipay_account.pk %}" class="btn-disable btn"><i class="fas fa-pencil-alt"></i> {% trans "Edit" %}</a>
+                            </div>
+                            <div align="right" class="col-sm-2">
+                                <button onclick="removeAlipayAccount('{{alipay_account.pk}}')" class="btn-disable btn"><i class="fas fa-trash-alt"></i>{% trans "Remove" %}</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+   </div>
+
+   <div id="add-bank-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-body" style="text-align: left; padding: 20px;">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <br>
+                    <h3 style="font-weight: bolder;">{% trans "Add New Bank Account" %}</h3>
+                    <div style="padding:20px;">
+                        <form id="bank-form" class="form-horizontal" action="." method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="{{ form.bank_name.id_for_label }}" class="control-label col-sm-4" style="padding:auto; text-align: left;">{{bank_form.bank_name.label}}</label>
+                                <div class="input-group col-sm-7 col-xs-12">
+                                     {% render_field bank_form.bank_name class="form-control" %}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.account_holder_name.id_for_label }}" class="control-label col-sm-4" style="padding:auto; text-align: left;">{{bank_form.account_holder_name.label}}</label>
+                                <div class="input-group col-sm-7 col-xs-12">
+                                     {% render_field bank_form.account_holder_name class="form-control" %}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.account_number.id_for_label }}" class="control-label col-sm-4" style="padding:auto; text-align: left;">{{bank_form.account_number.label}}</label>
+                                <div class="input-group col-sm-7 col-xs-12">
+                                     {% render_field bank_form.account_number class="form-control" %}
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 60px;">
+                                <div class="col-sm-offset-4 col-sm-7 col-xs-12" style="padding-left:0px;">
+                                  <button id="add-button" type="submit" class="btn" style="padding:10px; background-color: #48e543;color: white;">{% trans "ADD BANK ACCOUNT" %}</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-wechat-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-body" style="text-align: left; padding: 20px;">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <br>
+                    <h3 style="font-weight: bolder;">{% trans "Add New Wechat Account" %}</h3>
+                    <div style="padding:20px;">
+                        <form id="wechat-form" class="form-horizontal" action="." enctype="multipart/form-data"method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="wechat_account" class="control-label col-sm-4" style="padding:auto; text-align: left;">{% trans "Wechat Id" %}</label>
+                                <div class="input-group col-sm-7 col-xs-12">
+                                    <input type="text" class="form-control" name="wechat_account">
+                                </div>
+                            </div>
+                            <div class="form-group m40">
+                                <label>{% trans "Wechat QR Code" %}</label>
+                                <label for="id_wechat_qr" class="custom-file-upload" tabindex="12" >
+                                    <div align="center"><img src="{% static 'img/cloud-upload.png' %}" class="m50" style="width: 150px"></div> {% trans "Upload your QR code" %}
+                                    <div hidden>
+                                       <input name="wechat_qr" onchange="readURL(this);" id="id_wechat_qr" type="file" required>
+                                   </div>
+                                    <div class="errorlist">{{ kyc_form.front_page.errors|striptags }}</div>
+                                </label>
+                            </div>
+                            <div class="form-group m40 hidden-doc">
+                                <label>{% trans "QR Code" %}</label>
+                                <label class="custom-file-upload pd0" style="height: 200px;">
+                                    <img src="{% if kyc_form.front_page.value %}{% else %}/static/img/cloud-upload.png{% endif %}" class="img-size">
+                                </label>
+                                <label class="btn btn-upload" for="id_wechat_qr" align="center" style="
+                                    width: 100%;
+                                ">{% trans "Upload QR Code" %}</label>
+                            </div>
+                            <div class="form-group" style="margin-top: 60px;">
+                                <div class="col-sm-offset-4 col-sm-7 col-xs-12" style="padding-left:0px;">
+                                  <button id="add-button" type="submit" class="btn" style="padding:10px; background-color: #48e543;color: white;">{% trans "ADD WECHAT ACCOUNT" %}</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="add-alipay-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-body" style="text-align: left; padding: 20px;">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <br>
+                    <h3 style="font-weight: bolder;">{% trans "Add New Alipay Account" %}</h3>
+                    <div style="padding:20px;">
+                        <form id="alipay-form" class="form-horizontal" action="." enctype="multipart/form-data" method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="alipay_name" class="control-label col-sm-4" style="padding:auto; text-align: left;">{% trans "Alipay Id" %}</label>
+                                <div class="input-group col-sm-7 col-xs-12">
+                                    <input type="text" class="form-control" name="alipay_name">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="alipay_number" class="control-label col-sm-4" style="padding:auto; text-align: left;">{% trans "Alipay Number" %}</label>
+                                <div class="input-group col-sm-7 col-xs-12">
+                                    <input type="text" class="form-control" name="alipay_number">
+                                </div>
+                            </div>
+                            <div class="form-group m40">
+                                <label>{% trans "Alipay QR Code" %}</label>
+                                <label for="id_alipay_qr" class="custom-file-upload" tabindex="12" >
+                                    <div align="center"><img src="{% static 'img/cloud-upload.png' %}" class="m50" style="width: 150px"></div> {% trans "Upload your QR code" %}
+                                    <div hidden>
+                                       <input name="alipay_qr" onchange="readURL(this);" id="id_alipay_qr" type="file" required>
+                                   </div>
+                                    <div class="errorlist">{{ kyc_form.front_page.errors|striptags }}</div>
+                                </label>
+                            </div>
+                            <div class="form-group m40 hidden-doc">
+                                <label>{% trans "QR Code" %}</label>
+                                <label class="custom-file-upload pd0" style="height: 200px;">
+                                    <img src="{% if kyc_form.front_page.value %}{% else %}/static/img/cloud-upload.png{% endif %}" class="img-size">
+                                </label>
+                                <label class="btn btn-upload" for="id_alipay_qr" align="center" style="
+                                    width: 100%;
+                                ">{% trans "Upload QR Code" %}</label>
+                            </div>
+                            <div class="form-group" style="margin-top: 60px;">
+                                <div class="col-sm-offset-4 col-sm-7 col-xs-12" style="padding-left:0px;">
+                                  <button id="add-button" type="submit" class="btn" style="padding:10px; background-color: #48e543;color: white;">{% trans "ADD ALIPAY ACCOUNT" %}</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body" style="padding:20px;">
+                    <p><a href="{% url 'coins:settings' %}" class="pull-right" style="text-decoration: none; color:black;"><i class="fa fa-close" style="font-size:24px"></i></a></p>
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Account Successfully Added" %}</h3>
+                    &nbsp;
+                    <br>
+                    <br>
+                    <a href="{% url 'coins:settings' %}" class="btn" style="padding:10px; width:150px; background-color: #48e543;color: white;">{% trans "OK" %}</a>
+                    &nbsp;
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="remove-success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body" style="padding:20px;">
+                    <p><a href="{% url 'coins:settings' %}" class="pull-right" style="text-decoration: none; color:black;"><i class="fa fa-close" style="font-size:24px"></i></a></p>
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Account Successfully Removed" %}</h3>
+                    &nbsp;
+                    <br>
+                    <br>
+                    <a href="{% url 'coins:settings' %}" class="btn" style="padding:10px; width:150px; background-color: #48e543;color: white;">{% trans "OK" %}</a>
+                    &nbsp;
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+<script>
+    function addBank(){
+        $('#add-bank-modal h3').html("{% trans "Add Bank Account" %}");
+        $('#add-bank-modal').modal('show');
+    }
+    function addWechat() {
+        // $
+        $('#add-wechat-modal h3').html("{% trans "Add Wechat Account" %}");
+        $('#add-wechat-modal').modal('show');
+    }
+    function addAlipay() {
+        // $
+        $('#add-alipay-modal h3').html("{% trans "Add Alipay Account" %}");
+        $('#add-alipay-modal').modal('show');
+    }
+    function removeBankAccount(pk) {
+        $.ajax({
+            type: "POST",
+            url: "{% url 'remove_bank_account' %}",
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'pk': pk,
+            },
+            success: function(data) {
+                if(data['success']){
+                    $('#remove-success-modal').modal('show');
+                }
+            },
+            error: function(data) {
+                console.log('error');
+            }
+        });
+    }
+    function removeWechatAccount(pk) {
+        $.ajax({
+            type: "POST",
+            url: "{% url 'remove_wechat_account' %}",
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'pk': pk,
+            },
+            success: function(data) {
+                if(data['success']){
+                    $('#remove-success-modal').modal('show');
+                }
+            },
+            error: function(data) {
+                console.log('error');
+            }
+        });
+    }
+    function removeAlipayAccount(pk) {
+        $.ajax({
+            type: "POST",
+            url: "{% url 'remove_alipay_account' %}",
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'pk': pk,
+            },
+            success: function(data) {
+                if(data['success']){
+                    $('#remove-success-modal').modal('show');
+                }
+            },
+            error: function(data) {
+                console.log('error');
+            }
+        });
+    }
+    $('#wechat-form').submit(function(e) {
+        e.preventDefault();
+        var form = $(this)[0];
+        var data = new FormData(form);
+        console.log(form, data);
+        $.ajax({
+            type: "POST",
+            url: "{% url 'add_wechat_account' %}",
+            enctype: 'multipart/form-data',
+            processData: false,  // Important!
+            contentType: false,
+            cache: false,
+            data: data,
+            success: function(data) {
+                if(data['success']){
+                    $('#add-wechat-modal').modal('hide');
+                    $('#success-modal').modal('show');
+                }
+            },
+            error: function(data) {
+                console.log('error');
+            }
+        });
+    });
+    $('#alipay-form').submit(function(e) {
+        e.preventDefault();
+        var form = $(this)[0];
+        var data = new FormData(form);
+        $.ajax({
+            type: "POST",
+            url: "{% url 'add_alipay_account' %}",
+            enctype: 'multipart/form-data',
+            processData: false,  // Important!
+            contentType: false,
+            cache: false,
+            data: data,
+            success: function(data) {
+                if(data['success']){
+                    $('#add-alipay-modal').modal('hide');
+                    $('#success-modal').modal('show');
+                }
+            },
+            error: function(data) {
+                console.log('error');
+            }
+        });
+    });
+    $('#bank-form').submit(function(e){
+        e.preventDefault();
+        $('div.errorlist').remove();
+        $('#error-modal').modal('hide');
+
+        $.ajax({
+            type: "POST",
+            url: "{% url 'add_bank_account' %}",
+            dataType: "json",
+            data: $(this).serialize(),
+            success: function(data) {
+                if(data['success']){
+                    $('#add-bank-modal').modal('hide');
+                    $('#success-modal').modal('show');
+                }else{
+                    var errors_dict = data['errors_dict'];
+                    var error_field;
+                    for(error_field in errors_dict){
+                        var id = '#id_' + error_field;
+                        var error_text = errors_dict[error_field];
+                        $(id).after('<div class="errorlist">'+ error_text +'</div>');
+                    }
+
+                }
+            },
+            error: function(data) {
+                console.log('error');
+            }
+        });
+    });
+    function readURL(input) {
+        var fileExtension = ['jpeg', 'jpg', 'png'];
+        if ($.inArray($(input).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
+            $('#failure-msg').text("Only formats are allowed : "+fileExtension.join(', '));
+            $('#failure-model').modal('show')
+            $(input).val('')
+            //alert("Only formats are allowed : "+fileExtension.join(', '));
+        }
+        else{
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    $(input).parents('.form-group').next().find('.img-size')
+                        .attr('src', e.target.result)
+                        .width('100%')
+                        .height('100%');
+                    $(input).parents('.form-group').hide()
+                    $(input).parents('.form-group').next().show()
+
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    }
+</script>
+{% endblock %}

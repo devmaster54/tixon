@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load i18n %}
+
+{% block content %}
+{% if request.user.is_authenticated %}
+<div style="padding-top: 5em"></div>
+{% else %}
+<div style="padding-top: 7em"></div>
+{% endif %}
+<div class="container">
+    <h1 class="pb10">{% trans "Contact Us" %}</h1>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-success">
+        <strong>{% trans "Success" %}!</strong>
+        &nbsp;{{ message }}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-warning fade in">
+        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <strong>{% trans "Tips" %} :</strong> {% trans "Feedback and responses are in your Email" %};
+    </div>
+    {% endif %}
+    <form action="{% url 'contact_us' %}" method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_email">{% trans "TixonExchange Account Email" %}</label>
+            {% trans "Enter email" as ph %}
+            {% render_field form.email  class="form-control" aria-describedby="emailHelp" placeholder=ph %}"
+            <small id="emailHelp" class="form-text text-muted">{% trans "We'll never share your email with anyone else" %}.</small>
+        </div>
+        <div class="errorlist" style="padding-left:5px">
+            {{ form.email.errors|striptags }}
+        </div>
+        <div class="form-group">
+            <label for="id_subject">{% trans "Subject" %}</label>
+            {% trans "eg: Password change issue" as ph1 %}
+            {% render_field form.subject  class="form-control"  placeholder=ph1 %}
+        </div>
+        <div class="errorlist" style="padding-left:5px">
+            {{ form.subject.errors|striptags }}
+        </div>
+        <div class="form-group">
+            <label for="id_descrption">{% trans "Description" %}</label>
+            {% trans "Do not exceeds more than 100 words" as ph2 %}
+            {% render_field form.descrption  class="form-control"  placeholder=ph2 %}
+        </div>
+        <div class="errorlist" style="padding-left:5px">
+            {{ form.descrption.errors|striptags }}
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary ">{% trans "Submit" %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block footer %}
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load i18n %}
+{% block title %}{% trans "Register" %}{% endblock %}
+
+{% block header %}{% endblock %}
+{% block content %}
+        <div class="register-wrapper pb40">
+        <div class="container">
+            <h2 class="Ubuntu"><b>{% trans "Create" %}</b> {% trans "Your Account" %}</h2>
+            <div class="col-md-6">
+                <form name="signup-form" class="contact-form row columns_padding_10" method="post" action="{% url 'signup' %}" novalidate="">
+                {% csrf_token %}
+                <input type="hidden" name="username" required="" maxlength="150" id="id_username" autofocus="">
+                <div class="form-group">
+                    <label class="Montserrat">{% trans "Email" %}</label>
+                    <input name="email" id="id_email" placeholder="{% trans "Enter your mail" %}" required="" class="form-control Montserrat" tabindex="1" type="email" onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;" value="{% if form.email.value %} {{ form.email.value }} {% endif %}">
+                    <div class="errorlist">{{ form.email.errors }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="Montserrat">{% trans "Phone Number" %}</label>
+                    <input name="phone_number" id="id_phone_number" placeholder="{% trans "Enter your phone number" %}" required="" class="form-control Montserrat" tabindex="2" type="tel" onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;" value="{% if form.phone_number.value %} {{ form.phone_number.value }} {% endif %}">
+                    <div class="errorlist">{{ form.phone_number.errors }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="Montserrat">{% trans "Password" %} <i class="fa grey fa-info-circle p-relative">
+                        <div class="info-password"><ul><li> <i class="fa fa-circle fa-0x"></i>  {% trans "Minimum 8 characters" %}</li>
+                        <li> <i class="fa fa-circle fa-0x"></i> {% trans "At least 1 digit" %}</li>
+                        <li> <i class="fa fa-circle fa-0x"></i> {% trans "At least 1 lower case letter" %}</li></ul></div>
+                    </i></label>
+                    <div class="input-group">
+                        <input name="password1" placeholder="{% trans "Password" %}" class="form-control password-input" tabindex="3" id="id_password1" autocomplete="new-password" required="" type="password"
+                         onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;">
+                        <div class="input-group-btn">
+                            <button class="btn-show  btn" type="button"  ><i class="fa fa-eye" id="password_visibility"></i></button>
+                        </div>
+                    </div>
+                    <div class="errorlist">{{ form.password1.errors }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="Montserrat">{% trans "Confirm Password" %}</label>
+                    <div class="input-group">
+                        <input name="password2" placeholder="{% trans "Confirm Password" %}" class="form-control password-input" tabindex="4" id="id_password2" autocomplete="new-password" required="" type="password" onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;">
+                        <div class="input-group-btn">
+                            <button class="btn-show  btn" type="button"  ><i class="fa fa-eye" id="password_visibility1"></i></button>
+                        </div>
+                    </div>
+                    <div class="errorlist">{{ form.password2.errors }}</div>
+                </div>
+                <label class="check">
+                <input id="id_agree" type="checkbox" name="agree" tabindex="5" >
+                <span class="checkmark"> </span> {% trans "By signing up an account, you agree to our terms and conditions" %}
+                </label>
+                <div class="errorlist">{{ form.agree.errors }}</div>
+                <hr class="hr-dotted">
+                <button class="btn-main btn Montserrat" type="button" onclick="submit_form()" tabindex="6">Sign up</button>  <span class="Montserrat a-span"> {% trans "Already have an account?" %}"  <a href="{% url 'login' %}" tabindex="7" ><b>{% trans "Log in here" %} </b></a></span>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block jsfile %}{% endblock %}
+{% block script %}
+    <script src="{% static 'js/vendor/jquery-1.11.2.min.js' %}"></script>
+    <script>window.jQuery || document.write('<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"><\/script>')</script>
+    <script src="{% static 'js/vendor/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+{% endblock %}
+{% block footer %}{% endblock %}
+
+
+

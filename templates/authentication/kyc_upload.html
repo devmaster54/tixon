@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load tz %}
+{% get_current_timezone as TIME_ZONE %}
+{% load i18n %}
+{% block title %}{% trans "KYC Details" %}{% endblock %}
+
+{% block content %}
+<div class="verify">
+
+
+    <div class="container">
+        <h2 class="Ubuntu">{% trans "Verify Account" %}</h2> 
+        <div class="row">
+
+            <div class="col-sm-10 col-sm-offset-1">
+                <form id="profileform" method="post" action="." enctype="multipart/form-data" onsubmit="return validateForm()">
+                  {% csrf_token %}
+                  <input id="confirmation" name="confirmation" value="true" disabled hidden/>
+                <div class="row important">
+
+                    <div class="col-md-2 fa">
+                        
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <h4 class="m40"><b>{% trans "Important" %}</b></h4>
+
+                    </div>
+
+                    <div class="col-md-8">
+                        <p class="m30">{% trans "Ensure the documents and information provided are correct" %}. </p>
+                        <p class="c-red">{% trans "No changes can be done after submission" %}!</p>
+                    </div>
+
+                </div>
+
+
+                <div class="row auth-head">
+
+                    <h3 class="Ubuntu"><b>{% trans "Step 1" %}:</b> {% trans "Profile" %}</h3>
+
+                </div>
+                <div class="row verify-profile">
+
+                    <div class="col-sm-6">
+
+                        <div class="form-group">
+                            <label>{% trans "Full name" %}</label>
+                            {% render_field profile_form.full_name class="form-control" tabindex="1" %}
+                            <div class="errorlist">{{ profile_form.full_name.errors|striptags }}</div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+
+                <div class="row auth-head">
+
+                    <h3 class="Ubuntu"><b>{% trans "Step 2" %}:</b>{% trans "Upload documents" %}</h3>
+
+                </div>
+
+                <div class="row upload-document">
+
+                    <div class="row important">
+
+                        <div class="col-md-2 fa">
+                            
+                        </div>
+
+
+
+                        <div class="col-xs-8 col-xs-offset-2">
+                            <p class="m30">{% trans "Please upload high quality files. Low quality files will be rejected which will delay the verification process." %}  </p>
+
+                            <div class="row">
+
+                                <div class="col-sm-6">
+                                    <p class="mb0">{% trans "Accepted format" %}:</p>
+                                    <p class="mb0 m10">{% trans "Minimum dimension" %}</p>
+
+                                </div>
+                                <div class="col-sm-6">
+                                    <h6 class="mb0 m0"><b>jpg/jpeg, png, pdf</b></h6>
+                                    <h6 class="mb0 m20 m0"><b>500px x 500px</b></h6>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <h3 class="Ubuntu m50">{% trans "Photo ID" %}</h3>
+
+                    <div class="row m0">
+
+                        <div class="col-sm-12">
+                            <div class="form-group col-sm-6">
+                                <label>{% trans "Type of document" %}</label>
+                                    {% trans "Example: 24000" as ph1 %}
+                                    {% render_field kyc_form.document_type type="text" class="form-control" placeholder=ph1 tabindex="10" %}
+                                <div class="errorlist">{{ kyc_form.document_type.errors|striptags }}</div>
+                            </div>
+
+                            <div class="form-group col-sm-6">
+                                <label>{% trans "IC/Passport Number" %}</label>
+
+                                {% render_field kyc_form.document_number type="text" class="form-control" placeholder="" tabindex="11" %}
+                                <div class="errorlist">{{ kyc_form.document_number.errors|striptags }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group m40">
+                                <label>{% trans "Front of document" %}</label>
+                                <label for="id_front_page" class="custom-file-upload" tabindex="12" >
+                                    <div align="center"><img src="{% static 'img/cloud-upload.png' %}" class="m50" ></div> {% trans "Upload your document" %}
+                                    <div hidden>
+                                       <input name="front_page" onchange="readURL(this);" id="id_front_page" type="file">
+                                   </div>
+                                    <div class="errorlist">{{ kyc_form.front_page.errors|striptags }}</div>
+                                </label>
+
+
+                            </div>
+
+                            <div class="form-group m40 hidden-doc">
+                                <label>{% trans "Front of document" %}</label>
+                                <label class="custom-file-upload pd0" style="height: 200px;">
+                                    <img src="{% if kyc_form.front_page.value %}{% else %}/static/img/cloud-upload.png{% endif %}" class="img-size">
+                                </label>
+                                <label class="btn btn-upload" for="id_front_page" align="center" style="
+                                    width: 100%;
+                                ">{% trans "Upload Document" %}</label>
+                            </div>
+
+
+
+
+                        </div>
+
+                        <div class="col-sm-6">
+
+                            <div class="form-group m40">
+                                <label>{% trans "Back of document" %}</label>
+                                <label for="id_back_page" class="custom-file-upload " tabindex="13">
+                                    <div align="center"><img src="{% static 'img/cloud-upload.png' %}" class="m50" ></div> {% trans "Upload your document" %}
+
+                                    <div hidden>
+                                        <input name="back_page" onchange="readURL(this);" id="id_back_page" type="file">
+                                    </div>
+                                    <div class="errorlist">{{ kyc_form.back_page.errors|striptags }}</div>
+                                </label>
+
+
+                            </div>
+
+                            <div class="form-group m40 hidden-doc">
+                                <label>{% trans "Back of document" %}</label>
+                                <label class="custom-file-upload pd0" style="height: 200px;">
+                                    <img src="/static/img/cloud-upload.png" class="img-size">
+                                </label>
+                                <label class="btn btn-upload" for="id_back_page" align="center" style="
+                                    width: 100%;
+                                ">{% trans "Upload Document" %}</label>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row upload-submit">
+
+                    <button class="btn btn-main" type="submit" class="btn btn-info btn-lg" tabindex="17">{% trans "Submit for verification" %}</button>
+
+                </div>
+
+                {% if confirm_data %}
+                <div id="message-model" style="background: #0b0b0bcc;" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+                    <div class="modal-dialog modal-xs">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">{% trans "Confirm Submission" %}</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p class="m30">{% trans "Ensure the documents and informations provided are correct" %}. </p>
+                                <p class="c-red">{% trans "No changes can be done after verification is submitted" %}!</p>
+                            </div>
+                            <div class="pop-footer" style="text-align: center;">
+                                <button style="width:150px" type="button" class="btn btn-upload" data-dismiss="modal">{% trans "Edit" %}</button>
+                                <a href="{% url 'kyc_confirm' %}" class="btn btn-default" style="width: 200px;margin: 0px 11px;" >{% trans "Confirm" %}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+<div id="failure-model" style="background: rgba(11, 11, 11,0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal"><img src="{% static 'img/close.png' %}"></button>
+        <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+
+        <p class="Ubuntu"><b id="failure-msg"></b></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script>
+
+    $('#id_country_of_residence').on('change', function(){
+        var country_code = $(this).val()
+        console.log(country_code)
+
+        $.ajax({
+            type: "POST",
+            url: "{% url 'get_zip_rgx' %}",
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'country_code': country_code,
+            },
+            success: function (data) {
+                console.log(data.regex)
+                $('#id_zip_code').attr('pattern', data.regex)
+            }
+        });
+    });
+
+    {% if confirm_data %}
+        $('#message-model').modal('show');
+    {% endif %}
+
+    function validateForm(){
+        if($('#id_front_page').val() == ""){
+            $('#id_front_page').parent().next().html('This field is required');
+        }
+        if($('#id_back_page').val() == ""){
+            $('#id_back_page').parent().next().html('This field is required');
+        }
+         if($('#id_address_proof').val() == ""){
+            $('#id_address_proof').parent().next().html('This field is required');
+        }
+         if($('#id_photo_selfi').val() == ""){
+            $('#id_photo_selfi').parent().next().html('This field is required');
+        }
+
+        if($('#id_front_page').val() == ""||$('#id_back_page').val() == ""||$('#id_address_proof').val() == ""||$('#id_photo_selfi').val() == ""){
+            return false;
+        }
+    }
+
+    $('.calendar').on('click',function(){
+        $('#datepicker').datepicker("show")
+    })
+    $( function() {
+      $( "#datepicker" ).datepicker({
+          changeMonth: true,
+          changeYear: true,
+          constrainInput: false,
+          maxDate: 0,
+          yearRange: "-70:+0",
+        });
+    } );
+    function readURL(input) {
+        var fileExtension = ['jpeg', 'jpg', 'png'];
+        if ($.inArray($(input).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
+            $('#failure-msg').text("Only formats are allowed : "+fileExtension.join(', '));
+            $('#failure-model').modal('show')
+            $(input).val('')
+            //alert("Only formats are allowed : "+fileExtension.join(', '));
+        }
+        else{
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    $(input).parents('.form-group').next().find('.img-size')
+                        .attr('src', e.target.result)
+                        .width('100%')
+                        .height('100%');
+                    $(input).parents('.form-group').hide()
+                    $(input).parents('.form-group').next().show()
+
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    }
+    function readFullSelfieURL(input) {
+        var fileExtension = ['jpeg', 'jpg', 'png'];
+        if ($.inArray($(input).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
+            $('#failure-msg').text("Only formats are allowed : "+fileExtension.join(', '));
+            $('#failure-model').modal('show')
+            $(input).val('')
+            //alert("Only formats are allowed : "+fileExtension.join(', '));
+        }
+        else{
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    $(input).parents('.full-upload').next().find('.img-size')
+                        .attr('src', e.target.result)
+                        .width('100%')
+                        .height('100%');
+                    $(input).parents('.full-upload').hide()
+                    $(input).parents('.full-upload').next().show()
+                    $(input).parents('.full-upload').next().find('img.hidden-doc').show()
+
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    }
+    function readFullURL(input) {
+        var fileExtension = ['jpeg', 'jpg', 'png', 'pdf'];
+        if ($.inArray($(input).val().substr($(input).val().lastIndexOf('.') + 1).toLowerCase(), fileExtension) == -1) {
+            $('#failure-msg').text("Only formats are allowed : "+fileExtension.join(', '));
+            $('#failure-model').modal('show')
+            $(input).val('')
+            //alert("Only formats are allowed : "+fileExtension.join(', '));
+        }
+        else{
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                $(input).parents('.full-upload').next().find('.hidden-doc').hide()
+                reader.onload = function (e) {
+                    if($(input).val().substr($(input).val().lastIndexOf('.') + 1).toLowerCase() == 'pdf'){
+                        $(input).parents('.full-upload').next().find('object')
+                            .attr('data', e.target.result)
+                            .width('100%')
+                            .height('100%');
+                        $(input).parents('.full-upload').hide()
+                        $(input).parents('.full-upload').next().show()
+                        $(input).parents('.full-upload').next().find('object.hidden-doc').show()
+                    }
+                    else{
+                        $(input).parents('.full-upload').next().find('.img-size')
+                            .attr('src', e.target.result)
+                            .width('100%')
+                            .height('100%');
+                        $(input).parents('.full-upload').hide()
+                        $(input).parents('.full-upload').next().show()
+                        $(input).parents('.full-upload').next().find('img.hidden-doc').show()
+
+                    }
+
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    }
+  </script>
+{% endblock %}

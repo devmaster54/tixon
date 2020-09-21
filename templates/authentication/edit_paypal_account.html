@@ -1,0 +1,73 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load widget_tweaks %}
+{% load i18n %}
+{% block title %}{% trans "Edit Paypal Details" %}{% endblock title %}
+
+{% block content %}
+    <div class="bank-account">
+        <div class="container">
+            <div class="row mb50 send-coin-wrap">
+                <h2 class="Ubuntu mb20">{% trans "Edit Paypal Details" %}</h2>
+                <div class="row m0">
+                    <form id="wallettovault" method="post" action=".">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.bank_name.id_for_label }}" class="control-label col-sm-4" style="padding:auto; text-align: left;">{{form.bank_name.label}}</label>
+                            <div class="input-group col-sm-7 col-xs-12">
+                                 {% render_field form.bank_name class="form-control" %}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.bank_name.id_for_label }}" class="control-label col-sm-4" style="padding:auto; text-align: left;">{{form.bank_name.label}}</label>
+                            <div class="input-group col-sm-7 col-xs-12">
+                                 {% render_field form.bank_name class="form-control" %}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="paypal_address" class="control-label col-sm-4" style="padding:auto; text-align: left;">{% trans "Paypal Address" %}</label>
+                            <div class="input-group col-sm-7 col-xs-12">
+                                <!-- <input type="email" class="form-control" name="paypal_address" value=""> -->
+                                {% render_field form.paypal_address class="form-control" %}
+                            </div>
+                        </div>
+                        <div align="center">
+                            <a href="{% url 'coins:settings' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> {% trans "BACK TO SETTINGS" %}</a>
+                            <button type="submit" id="submit_amount" class="btn-main btn m20 pull-right" style="margin-left:40px;">  {% trans "CONFIRM" %} </button>
+                        </div>
+                    </from>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% if success %}
+    <div id="success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body text-center" style="padding:0px 20px;">
+                    <p><a href="{% url 'coins:settings' %}" class="pull-right" style="text-decoration: none; color:black;"><i class="fa fa-close" style="font-size:24px"></i></a></p>
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Paypal Account Successfully Updated" %}</h3>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'coins:settings' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+ </div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+<script>
+    {% if success %}
+        $("#success-modal").modal('show');
+    {% endif %}
+</script>
+{% endblock script %}

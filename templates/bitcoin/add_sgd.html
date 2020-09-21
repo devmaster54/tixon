@@ -1,0 +1,53 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% load transaction_status %} 
+
+{% block title %}Send Bitcoin{% endblock %}
+
+
+{% block content %}
+
+<div class="send-coin ">
+    <div class="container">
+        <h2 class="Ubuntu mb20">Add Amount</h2>
+        <div class="row mb50 send-coin-wrap">
+            <div class="row m0">
+                <h4 class="m30"> <b>SGD wallet details</b> </h4>
+                <div class="row m0 wallet-details">
+                    <!-- <div class="col-sm-6">
+                        <img class="d-inline-block" src="{% static 'img/bitcoin.png' %}" width="40px">
+                        <p class="d-inline-block mf10"><b>SGD</b></p>
+                    </div> -->
+                    <div class="col-sm-6">
+                        <p class="m10 f-medium">User: {{wallet.user.username}}</p>
+                        <p class="m10 f-medium">Balance: {{wallet.amount|floatformat:2}} SGD</p>
+                    </div>
+                </div>
+                <form method="post" action=".">
+                    {% csrf_token %}
+                    <h4 class="m30"><b>Amount(SGD)</b></h4>
+                    <div class="form-group">
+                        <input type="text" name="amount" class="form-control wallet-send-coin-addr"  placeholder="Enter Amount" value="{{form.address.value}}">
+                        <span class="errorlist">{{form.amount.errors|striptags}}</span>
+                    </div>
+                    <div align="right">
+                        <a href="{% url 'coins:sgd_wallets' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> BACK TO SGD WALLET LIST</a>
+                        <button type="submit" class="btn-main btn m20">  CONFIRM </button>
+                    </div>
+                </form>
+                <div class="">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+
+
+{% block script %} 
+{% endblock script %}
+
+{% block footer %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load i18n %}
+
+{% block title %}{% trans "Notifications" %}{% endblock %}
+
+{% block content %}
+<div class="trans">
+	<div class="container">
+		<div class="row m0">
+			<div class="col-sm-12">
+				<div class="trans-details">
+					<div class="tab-content">
+						{% if notifications.0 %}
+						<div class="table-responsive">
+							<table class="table table_template darklinks table-bordered table-hover" id="timetable">
+								<thead>
+									<tr>
+										<th>{% trans "Date" %}</th>
+										<th>{% trans "Message" %}</th>
+									</tr>
+								</thead>
+								<tbody>
+
+									{% for obj in notifications %}
+									<tr {% if forloop.counter <= notification_count %} style="background-color: #f6ebeb" {% endif %}>
+										<td>{{obj.date}}</td>
+										<td>{{obj.notification|safe}}</td>
+
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						{% else %}
+						<p class="text-center"><b> {% trans "No Notifications" %}</b></p>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content %}
+
+{% block script %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

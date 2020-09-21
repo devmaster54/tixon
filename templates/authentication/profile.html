@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Profile" %}{% endblock %}
+
+{% block content %}
+<div class="profile">
+    <div class="container">
+        <div class="row m0">
+            <div class="col-sm-4">
+                <div class="profile-img">
+                    <h4>{% trans "Profile" %}</h4>
+                    <div class="p-relative">
+                        <img src="{% if not user.get_user_address_details.photo_selfi.url %}
+                                    {% static 'img/user.png' %}
+                                  {% else %}
+                                    {{ user.get_user_address_details.photo_selfi.url }}
+                                  {% endif %}" width="150px" height="150px" class="img-circle">
+                        <!--<div class="cam-pic"> <i class="fas fa-camera"></i> </div>-->
+                        <h3><b>{{user.get_user_profile.full_name}}</b></h3>
+                    </div>
+                </div>
+            </div>
+            {% if not request.user.is_superuser %}
+            <div class="col-sm-8">
+                <div class="profile-top">
+                    <h4 class="m40"><b>{% trans "Your profile status" %}</b></h4>
+                    <p>{% trans "This user profile has considered in" %} {{request.user.get_kyc_verified_display|lower}} {% trans "state" %}. {% trans "For any modification in profile details please contact the site administrator" %}.</p>
+                    {% if request.user.kyc_verified == 'not-verified' %}
+                        <a href="{% url 'kyc_upload' %}" class="btn-main btn m20 "> <i class="" style="color: #0fd800;"></i> {% trans "Verifiy" %}</a>
+                    {% elif request.user.kyc_verified == 'processing' %}
+                        <button class="btn-main btn m20 "> <i class="fas fa-sync" style="color: #f3bc18;"></i> {% trans "Processing" %}</button>
+                    {% elif request.user.kyc_verified == 'verified' %}
+                        <button class="btn-main btn m20 "> <i class="fas fa-check" style="color: #0fd800;"></i> {% trans "Verified" %}</button>
+                    {% elif request.user.kyc_verified == 'rejected' %}
+                        <button class="btn-main btn m20 "> <i class="fas fa-close" style="color: red;"></i> {% trans "Rejected" %}</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <div class="col-sm-12">
+                <div class="profile-bottom">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#home">{% trans "Personal details" %}</a></li>
+                        <li><a data-toggle="tab" href="#menu1">{% trans "Documents" %}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="home" class="tab-pane fade in active">
+                            <div class="row m0">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "Full Name" %}</label>
+                                        <h3 class="m0">{{user.get_user_profile.full_name}}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="menu1" class="tab-pane fade">
+                            <div class="row m0">
+                                <h2 class="Ubuntu mf15">{% trans "Photo ID" %}</h2>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "Type of document" %}</label>
+                                        <h3>{{user.get_user_details.get_document_type_display}}</h3>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{% trans "Front of document" %}</label>
+                                        <img src="{{user.get_user_details.front_page.url}}" width="100%">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "IC/Passport Number" %}</label>
+                                        <h3>{{user.get_user_details.document_number}}</h3>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{% trans "Back of document" %}</label>
+                                        <img src="{{user.get_user_details.back_page.url}}" width="100%">
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:right; padding:20px;">
+                    {% if request.user.is_superuser %}
+                        <a href="{% url 'kyc_list' %}" style="width:200px;margin-right:15px;" class="btn btn-success">{% trans "Back To KYC List" %}</a>
+                        {% if user.kyc_verified == 'processing' %}
+                            <a href="{% url 'kyc_approve' pk=user.pk %}" style="width:200px" class="btn btn-primary">{% trans "Approve" %}</a>
+                        {% endif %}
+
+                        {% if not user.kyc_verified == 'rejected' %}
+                        <a href="{% url 'kyc_reject' pk=user.pk %}" style="width:200px" class="btn btn-danger">{% trans "Reject" %}</a>
+                        {% endif %}
+                        
+                    {% else %}
+                        <a href="{% url 'welcome' %}" style="width:200px;margin-right:15px;" class="btn btn-success">{% trans "Back To Dashboard" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+  <script>
+    $('#home,#tag').on('hover focus',function(){
+        alert();
+    })
+  </script>
+{% endblock %}

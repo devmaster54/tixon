@@ -1,0 +1,163 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "User Accounts" %}{% endblock %}
+
+{% block content %}
+  <div class="trans">
+
+
+
+    <div class="container">
+      <h2 class="Ubuntu mf15">{% trans "User Accounts" %}</h2>
+        <div class="mf15 mb20">
+          <h4>{% trans "Main Balance" %} : {% get_account_balance_btc %} BTC</h4> 
+          <h4>{% trans "Main Balance" %} : {% get_account_balance_txch %} TXCH</h4>
+        </div>
+      <div class="row m0">
+        <div class="col-sm-6">
+          <form id="user_balance">
+            <div class="form-group">
+                <label>{% trans "Enter User Email" %}</label>
+                    <input class="form-control" id="useremail" type="email" name="" required="">
+                <div class="errorlist" style="display: none">{% trans "Enter correct email" %}</div>
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn add-bank">{% trans "Check Balance and List Transactions" %}</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-sm-6">
+            <div class="mf15 mb20">
+              <hr />
+              <h4>{% trans "BTC Balance" %} : <span id="btc_balance">0</span> BTC</h4> 
+              <h4>{% trans "TXCH Balance" %} : <span id="txch_balance">0</span> TXCH</h4>
+            </div>
+        </div>
+      </div>
+      <div id="home" class="tab-pane fade in active">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered" id="send_table" width="100%">
+              <thead>
+                <tr>
+                  <th>{% trans "Date&nbsp;&amp;&nbsp;Time" %}</th>
+                  <th>{% trans "Status" %}</th>
+                  <th>{% trans "Amount(BTC)" %}</th>
+                  <th>{% trans "From Account" %}</th>
+                  <th>{% trans "To Account" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                {% for transaction in btctransactions %}
+                  <tr>
+                    <td>
+                        {% conver_unix_to_datetime transaction.time %}
+                  </td>
+
+                    <td>{% ifequal transaction.confirmations 0 %}
+                                  {% trans "Unconfirmed" %}
+                              {% else %}
+                                  {% trans "Confirmed" %}
+                              {% endifequal %}
+                          </td>
+                    <td>{{transaction.amount}}</td>
+                    <td>{{transaction.account}}</td>
+                    <td>{{transaction.otheraccount}}</td>
+                  </tr>
+                {% empty %}
+              <tr>
+                <td colspan="5"> {% trans "No Transactions" %}</td>
+              </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered" id="send_table" width="100%">
+              <thead>
+                <tr>
+                  <th>{% trans "Date&nbsp;&amp;&nbsp;Time" %}</th>
+                  <th>{% trans "Status" %}</th>
+                  <th>{% trans "Amount(TXCH)" %}</th>
+                  <th>{% trans "From Account" %}</th>
+                  <th>{% trans "To Account" %}</th>
+                </tr>
+              </thead>
+              <tbody id="txch_transactions">
+              </tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </div>
+<script type="text/javascript">
+
+  var my_func = function( event ) {
+    event.preventDefault()
+    $(".errorlist").css("display", "none");
+    var user_email = $("#useremail").val()
+    var csrftoken = getCookie('csrftoken')
+    var data = {
+        'useremail': user_email
+    }
+    $("#btc_balance").html("0")
+    $("#txch_balance").html("0")
+    $.ajax({
+        url: "{% url 'coins:get_user_balance' %}",
+        type: 'POST',
+        headers:{
+            "X-CSRFToken": csrftoken
+        },
+        data: data,
+        cache: true,
+        success: function(response) {
+            if(!response.success){
+                $(".errorlist").css("display", "block");
+            }
+            else {
+                $("#btc_balance").html(response.user_balance.btc_balance)
+                $("#txch_balance").html(response.user_balance.txch_balance)
+                // console.log(response.user_balance.txch_transactions)
+                var tx_table = ""
+                for (i in response.user_balance.txch_transactions) {
+                  transaction = response.user_balance.txch_transactions[i]
+                  var t = new Date(0)
+                  t.setUTCSeconds(transaction.time)
+                  var formatted = t.toLocaleString();
+                  tx_table += "<tr><td>"+ formatted + "</td><td>" + " Moved" + "</td><td>" + transaction.amount +"</td><td>" + transaction.account + "</td><td>" + transaction.otheraccount + "</td></tr>";
+                }
+                $("#txch_transactions").html(tx_table)
+            }
+        }
+    });
+  }
+
+  var form = document.getElementById("user_balance")
+
+  form.addEventListener("submit", my_func, true);
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+          var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+         var cookie = jQuery.trim(cookies[i]);
+    // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) == (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+         }
+      }
+    }
+     return cookieValue;
+  }
+  
+</script>
+{% endblock content %}
+
+{% block footer %}
+{% endblock %}
+
+

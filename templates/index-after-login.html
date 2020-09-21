@@ -1,0 +1,1352 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load transaction_status %}
+{% load widget_tweaks %}
+{% load i18n %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <style>
+    input[type='number'] {
+      -moz-appearance:textfield;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+  </style>
+  <div class="home" id="index-after-login">
+    <div class="container-fluid">
+        <div class="row home-head">
+            <div class="col-sm-3">
+                <div class="oder-wrap">
+                    <div class="oder-head">
+                        <h4 class="Ubuntu">{% trans "Sell Orders" %}</h4>
+                        <!-- <button class="btn btn-x"><i class="fas fa-exchange-alt"></i></button> -->
+                        <!-- <p class="pull-right">Total: <b class="ask-sum"><span class="sell-sum-total"></span></b> SGD</p> -->
+                    </div>
+                    <div class="oder-inner">
+                        <table class="table table-striped ask-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "PRICE" %}({{to_pair}})</th>
+                                    <th>{% trans "AMOUNT" %}({{base_pair}})</th>
+                                    <th>{% trans "TOTAL" %}({{to_pair}})</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="oder-wrap">
+                    <div class="oder-head pb20">
+                        <h4 class="Ubuntu">{% trans "Buy Orders" %}</h4>
+                        <!-- <p class="pull-right">Total: <b class="bid-sum"><span class="buy-sum-total"></span></b> SGD</p> -->
+                    </div>
+                    <div class="oder-inner">
+                        <table class="table table-striped bid-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "PRICE" %}({{to_pair}})</th>
+                                    <th>{% trans "AMOUNT" %}({{base_pair}})</th>
+                                    <th>{% trans "TOTAL" %}({{to_pair}})</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="row m0">
+                    <div class="col-sm-3">
+                        <h1 class="Ubuntu">
+                            <select id="cryptopairs" name="pair_list" onChange="changeCrypto()" style="background-color: #1b1c20">
+                                {% for currency in objectcurrency %}
+                                    <option value="{{currency.id}}"
+                                        {% if currency.id == cid %} selected="selected"{% endif %}>
+                                        {{currency.basepair}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </h1>
+                    </div>
+                    <div class="col-sm-3">
+                        <h1 class="Ubuntu">
+                            <select id="fiatpairs" name="pair_list" onChange="changetoPair()" style="background-color: #1b1c20">
+                                {% if is_otc == 1 %}
+                                    {% for fiat in fiats %}
+                                        <option data-type="fiat" value="{{fiat.id}}"
+                                            {% if fiat.id == fid %} selected="selected"{% endif %}>
+                                            {{fiat.topair}}
+                                        </option>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if is_otc == 0 %}
+                                    {% for currency in objectcurrency %}
+                                    <!-- add:100 for check if it's crypto or fiat -->
+                                        <option data-type="crypto" value="{{currency.id|add:100 }}" 
+                                            {% if currency.id|add:100 == fid %} selected="selected"{% endif %}>
+                                            {{currency.basepair}}
+                                        </option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </h1>
+                    </div>
+                </div>
+                <div class="clearfix"></div>
+                <div class="tab-chart">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#home">{% trans "PRICE" %}</a></li>
+                        <li><a data-toggle="tab" href="#menu1">{% trans "Depth" %}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="home" class="tab-pane fade in active">
+                            <div class="chart-wrap">
+                                <div id="chart" style="height:445px;" data-highcharts-chart="1">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="menu1" class="tab-pane fade" style="">
+                            <div class="depth-bg">
+                                <div id="depth-chart" style=" width: 100%; height: 445px; margin: 0 auto" data-highcharts-chart="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="buy-sell">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#limit">{% trans "Limit" %}</a></li>
+                        <!-- <li><a data-toggle="tab" href="#market">{% trans "Market" %}</a></li>
+                        <li><a data-toggle="tab" href="#non-stop">{% trans "Stop-Limit" %}</a></li> -->
+                    </ul>
+                    <div class="tab-content">
+                        <div id="limit" class="tab-pane fade in active">
+                            <div class="row m0">
+                                <div class="col-sm-6 border-right">
+                                    <h3 class="Ubuntu">{% trans "Buy" %} {{base_pair}} <span class="pull-right"> </span></h3><!-- {{to_pair}} Balance: {% get_sgd_balance request.user %} -->
+                                    <form class="buy-limit-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Price:" %}</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.price class="form-control change-price" min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Amount:" %}</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                    <span class="input-group-addon">{{base_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Total:" %}</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.total class="form-control total-val" readonly='true' min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button  class="btn btn-block buy-btn" onclick="ordersBuy('buy-limit-orders',1)" type="button">{% trans "Buy" %} {{base_pair}}</button>
+
+                                            <!--  modal onclick="ordersBuy('buy-limit-orders',1)"-->
+
+                                            <div class="container">
+                                              <!-- Trigger the modal with a button -->
+                                              <!-- Modal -->
+                                          </div>
+                                          <!--  modal-->
+                                      </div>
+                                      <div class="diaplay-none">
+                                        {% render_field exchange_form.exchange_form value='sgd' %}
+                                        {% render_field exchange_form.exchange_to value='btc' %}
+                                        {% render_field exchange_form.user  %}
+                                        {% render_field exchange_form.limit value='0'  %}
+                                        {% render_field exchange_form.order_type  %}
+                                        {% render_field exchange_form.order_mode  %}
+                                        {% render_field exchange_form.is_otc  %}
+                                    </div>
+                                </form>
+                            </div>
+                                <div class="col-sm-6">
+                                    <h3 class="Ubuntu">{% trans "Sell" %} {{base_pair}} <span class="pull-right">{{base_pair}} {% trans "Balance:" %} {% get_crypto_balance request.user %} </span> </h3>
+                                    <form class="sell-limit-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Price:" %}</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.price class="form-control change-price" min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Amount" %}: </label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                    <span class="input-group-addon">{{base_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Total" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.total class="form-control total-val" readonly='true' min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button onclick="ordersSell('sell-limit-orders',1)" class="btn btn-block sell-btn" type="button">{% trans "Sell" %} {{base_pair}}</button>
+                                        </div>
+                                        <div class="diaplay-none">
+                                            {% render_field exchange_form.exchange_form value='btc' %}
+                                            {% render_field exchange_form.exchange_to value='sgd' %}
+                                            {% render_field exchange_form.user  %}
+                                            {% render_field exchange_form.limit value='0'  %}
+                                            {% render_field exchange_form.order_type  %}
+                                            {% render_field exchange_form.order_mode  %}
+                                            {% render_field exchange_form.is_otc  %}
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="market" class="tab-pane fade">
+                            <div class="row m0">
+                                <div class="col-sm-6 border-right">
+                                    <h3 class="Ubuntu">{% trans "Buy" %} {{base_pair}} <span class="pull-right">{{to_pair}} {% trans "Balance" %}: {% get_sgd_balance request.user %} </span></h3>
+                                    <form class="buy-market-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Price" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.price class="form-control change-price"  min="0"%}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Amount" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                    <span class="input-group-addon">{{base_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Total" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.total class="form-control total-val" min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button onclick="ordersBuy('buy-market-orders',0)" class="btn btn-block buy-btn" type="button">{% trans "Buy" %} {{base_pair}}</button>
+                                        </div>
+                                        <div class="diaplay-none">
+                                            {% render_field exchange_form.exchange_form value='sgd' %}
+                                            {% render_field exchange_form.exchange_to value='btc' %}
+                                            {% render_field exchange_form.user  %}
+                                            {% render_field exchange_form.limit value='0'  %}
+                                            {% render_field exchange_form.order_type  %}
+                                            {% render_field exchange_form.order_mode  %}
+                                            {% render_field exchange_form.is_otc  %}
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="col-sm-6">
+                                    <h3 class="Ubuntu">{% trans "Sell" %} {{base_pair}} <span class="pull-right">{{base_pair}} {% trans "Balance" %}: {% get_crypto_balance request.user %} </span></h3>
+                                    <form class="sell-market-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Price" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.price class="form-control change-price" min="0"%}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Amount" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                    <span class="input-group-addon">{{base_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Total" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.total class="form-control total-val" readonly='true' min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button onclick="ordersSell('sell-market-orders',0)" class="btn btn-block sell-btn" type="button">{% trans "Sell" %} {{base_pair}}</button>
+                                        </div>
+                                        <div class="diaplay-none">
+                                            {% render_field exchange_form.exchange_form value='btc' %}
+                                            {% render_field exchange_form.exchange_to value='sgd' %}
+                                            {% render_field exchange_form.user  %}
+                                            {% render_field exchange_form.limit value='0'  %}
+                                            {% render_field exchange_form.order_type  %}
+                                            {% render_field exchange_form.order_mode  %}
+                                            {% render_field exchange_form.is_otc  %}
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="non-stop" class="tab-pane fade">
+                            <div class="row m0">
+                                <div class="col-sm-6 border-right">
+                                    <h3 class="Ubuntu">{% trans "Buy" %} {{base_pair}} <span class="pull-right">{{to_pair}} {% trans "Balance" %}: {% get_sgd_balance request.user %} </span></h3>
+                                    <form class="buy-stop-limit-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Stop" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.limit class="form-control" min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Price" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    <input type="number" name="price" min="0" id="id_price" step="any" class="form-control change-price" required="">
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Amount" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                    <span class="input-group-addon">{{base_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Total" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.total class="form-control total-val" readonly='true' min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button onclick="ordersBuy('buy-stop-limit-orders',2)" class="btn btn-block buy-btn" type="button">{% trans "Buy" %} {{base_pair}}</button>
+                                        </div>
+                                        <div class="diaplay-none">
+                                            {% render_field exchange_form.exchange_form value='sgd' %}
+                                            {% render_field exchange_form.exchange_to value='btc' %}
+                                            {% render_field exchange_form.user  %}
+                                            {% render_field exchange_form.order_type  %}
+                                            {% render_field exchange_form.order_mode  %}
+                                            {% render_field exchange_form.is_otc  %}
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="col-sm-6">
+                                    <h3 class="Ubuntu">{% trans "Sell" %} {{base_pair}} <span class="pull-right">{{base_pair}} {% trans "Balance" %}: {% get_crypto_balance request.user %} </span></h3>
+                                    <form class="sell-stop-limit-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Stop" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.limit class="form-control" min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Price" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    <input type="number" name="price" min="0" id="id_price" step="any" class="form-control change-price" required="">
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Amount" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                    <span class="input-group-addon">{{base_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="label-wrap">
+                                                <label class=" ">{% trans "Total" %}:</label>
+                                            </div>
+                                            <div class="input">
+                                                <div class="input-group">
+                                                    {% render_field exchange_form.total class="form-control total-val" readonly='true' min="0" %}
+                                                    <span class="input-group-addon">{{to_pair}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <button onclick="ordersSell('sell-stop-limit-orders',2)" class="btn btn-block sell-btn" type="button">{% trans "Sell" %} {{base_pair}}</button>
+                                        </div>
+                                        <div class="diaplay-none">
+                                            {% render_field exchange_form.exchange_form value='btc' %}
+                                            {% render_field exchange_form.exchange_to value='sgd' %}
+                                            {% render_field exchange_form.user  %}
+                                            {% render_field exchange_form.order_type  %}
+                                            {% render_field exchange_form.order_mode  %}
+                                            {% render_field exchange_form.is_otc  %}
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="market">
+                    <div class="market-head">
+                        <h4 class="Ubuntu">{% trans "Markets" %}</h4>
+                        <!-- <p class="mf15 m15">
+                        </p>
+                        <input type="text" class="form-control" name="coin_filter"  placeholder="Filter (Ctrl+F)" data-toggle="tooltip" title="Search coins" data-placement="left"> -->
+                    </div>
+                    <div class="daily-update">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a data-toggle="tab">{{base_pair}}</a></li>
+                            <!-- <li><a style="background: #4f4f53;
+                                border: 1px solid #2d2f35;" data-toggle="tab" href="#menu4"><i class="fas fa-cog"></i></a></li> -->
+                        </ul>
+                        <div class="tab-content">
+                            <div id="home" class="tab-pane fade in active">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-star"></i> {% trans "Coin" %}</th>
+                                            <th>{% trans "Price" %}</th>
+                                            <th>{% trans "Volume" %}</th>
+                                            <th>{% trans "Change" %}</th>
+                                            <th>{% trans "Name" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="my-coin-list">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="menu1" class="tab-pane fade">
+                                <h3>Menu 1</h3>
+                                <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                            </div>
+                            <div id="menu2" class="tab-pane fade">
+                                <h3>Menu 2</h3>
+                                <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+                            </div>
+                            <div id="menu3" class="tab-pane fade">
+                                <h3>Menu 3</h3>
+                                <p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="notice">
+                    <div class="notice-head">
+                        <h4 class="Ubuntu">Notices <i class="fab fa-twitter pull-right"></i></h4>
+                    </div>
+                    <div class="notice-wrap">
+                        <div class="notice-content">
+                            <h6>Notice to Our Legacy Account Holders: https://poloniex.com/press-releases/2017.12.27-Notice-to-legacy-account-holders/</h6>
+                            <p class="Ubuntu"><b>Posted by <span>busoni@poloniex</span> at 2017-12-27 22:24:47</b></p>
+                        </div>
+                        <div class="notice-content">
+                            <h6>Notice to Our Legacy Account Holders: https://poloniex.com/press-releases/2017.12.27-Notice-to-legacy-account-holders/</h6>
+                            <p class="Ubuntu"><b>Posted by <span>busoni@poloniex</span> at 2017-12-27 22:24:47</b></p>
+                        </div>
+                        <div class="notice-content">
+                            <h6>Notice to Our Legacy Account Holders: https://poloniex.com/press-releases/2017.12.27-Notice-to-legacy-account-holders/</h6>
+                            <p class="Ubuntu"><b>Posted by <span>busoni@poloniex</span> at 2017-12-27 22:24:47</b></p>
+                        </div>
+                        <div class="notice-content">
+                            <h6>Notice to Our Legacy Account Holders: https://poloniex.com/press-releases/2017.12.27-Notice-to-legacy-account-holders/</h6>
+                            <p class="Ubuntu"><b>Posted by <span>busoni@poloniex</span> at 2017-12-27 22:24:47</b></p>
+                        </div>
+                        <div class="notice-content">
+                            <h6>Notice to Our Legacy Account Holders: https://poloniex.com/press-releases/2017.12.27-Notice-to-legacy-account-holders/</h6>
+                            <p class="Ubuntu"><b>Posted by <span>busoni@poloniex</span> at 2017-12-27 22:24:47</b></p>
+                        </div>
+                        <div class="notice-content">
+                            <h6>Notice to Our Legacy Account Holders: https://poloniex.com/press-releases/2017.12.27-Notice-to-legacy-account-holders/</h6>
+                            <p class="Ubuntu"><b>Posted by <span>busoni@poloniex</span> at 2017-12-27 22:24:47</b></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div class="oder-wrap  row m0 mb20 mf15 mr15">
+                <div class="oder-head">
+                    <h4 class="Ubuntu">{% trans "Open Orders" %}</h4>
+                </div>
+                <div class="oder-inner">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Pair" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Mode" %}</th>
+                                <th>{% trans "Price" %}</th>
+                                <th>{% trans "Trigger" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Total" %}</th>
+                                <th>{% trans "Completed" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if open_orders|length %}
+                            {% for orders in open_orders %}
+                            <tr>
+                                <td>{{orders.order_time}}</td>
+                                <td>{{ orders.exchange_form|upper }}/{{ orders.exchange_to|upper }}</td>
+                                <td>{% if orders.order_type == "1" %}{% trans "Sell" %}{% else %}{% trans "Buy" %}{% endif %}</td>
+                                <td>{% if orders.order_mode == "2" %}{% trans "Stop-Limit" %}{% elif orders.order_mode == "1" %}Limit{% else %}{% trans "Market" %}{% endif %}</td>
+                                <td>{{orders.price}}</td>
+                                <td>{% if orders.order_mode == "2" %}{{orders.limit}}{% else %}-{% endif %}</td>
+                                <td>{{orders.amount}}</td>
+                                <td>{% total_price orders.price orders.amount %}</td>
+                                    <td>
+                                    <div id="myProgress">
+                                      <div id="myBar" style="width:{% percentage_completed orders.coins_covered orders.amount %}%;color:#000">{% percentage_completed orders.coins_covered orders.amount %}%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="9" align="center">{% trans "No open orders found" %}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="oder-wrap row m0 mb20 mf15 mr15">
+                <div class="oder-head">
+                    <h4 class="Ubuntu">{% trans "Trade History" %}</h4>
+                </div>
+                <div class="oder-inner">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Pair" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Price" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Total" %}</th>
+                                <th>{% trans "Trigger" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if order_history|length %}
+                            {% for orders in order_history %}
+                            <tr>
+                                <td>{{orders.order_time}}</td>
+                                <td>{{orders.exchange_form|upper}}/{{orders.exchange_to|upper}}</td>
+                                <td>{% if orders.order_type == "1" %}{% trans "Sell" %}{% else %}{% trans "Buy" %}{% endif %}</td>
+                                <td>{{orders.price}}</td>
+                                <td>{{orders.amount}}</td>
+                                <td>{% total_price orders.price orders.amount %}</td>
+                                <td>{% if orders.limit %}{{ orders.limit }}{% else %}-{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="7" align="center">{% trans "No order history records found" %}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="myModal" role="dialog" aria-labelledby="myLargeModalLabel">
+    <input type="hidden" id="submitted_form_class">
+    <div class="modal-dialog ">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <p align="left"><h3 style="color:#3e3e3e"><b>{% trans "Confirm" %}</b></h3></p>
+        </div>
+        <div class="modal-body">
+          <h3 class="pop-h3">{% trans "Are you sure?" %}</h3>
+        </div>
+        <div class="modal-footer">
+            <div align="center">
+                <button type="button" class="btn btn-upload" style="width: 30%;" onclick="call_ajax_form_submit_for_orders()">{% trans "OK" %}</button>
+                <button type="button" class="btn btn-default" style="width: 30%;" data-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+        </div>
+      </div>
+
+    </div>
+</div>
+<div id="acceptorderModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">{% trans "Enter Amount" %}</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'coins:accept_order' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="available-amount" class="col-form-label">{% trans "Available Amount" %}: <span id="available_amount"></span></label>
+            </div>
+            <div class="form-group">
+                <label for="recipient-amount" class="col-form-label">{% trans "Amount" %}:</label>
+                <input type="number" class="" name="amount" data-pk="" data-limit="" id="recipient-amount" step="0.01" value="0.00"><br/>
+                <span class="errorlist">{% trans "Required amount is not acceptable" %}</span>
+            </div>
+            <div class="form-group">
+                <input type="number" name="id" id="order-pk"><br/>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" style="padding: 10px 25px;
+    background-color: #12b907;" onclick="accept_order()" class="btn btn-success">{% trans "Buy" %}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/highstock.js' %}"></script>
+<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/maps/modules/map.js"></script>
+
+<script>
+$(document).ready(function(){
+    $.ajaxSetup({ cache: false }); // or iPhones don't get fresh data
+    setMarketPrice()
+    $('.change-amount, .change-price').on('keyup', function(){
+        container = $(this).parents('form')
+        val = parseFloat(container)
+        container.find('.change-amount').each(function(){
+            sum = parseFloat(container.find('.change-amount').val())* parseFloat(container.find('.change-price').val());  // Or this.innerHTML, this.innerText
+            container.find('.total-val').val(sum.toFixed(3))
+        });
+    })
+
+    {% if sell_order %}
+        drawParseOrderBookDraw({{sell_order|safe}},1)
+    {% endif %}
+
+    {% if buy_order %}
+        drawParseOrderBookDraw({{buy_order|safe}},0)
+    {% endif %}
+
+    chart("{{ base_pair }}",'Bitcoin');
+    coinList("{{ base_pair }}",'');
+    chartShow();
+
+    $('[data-toggle="tooltip"]').tooltip();
+    $(document).keydown(function(e){
+          //CTRL + V keydown combo
+        if(e.ctrlKey && e.keyCode == 70){
+            e.preventDefault();
+            $('input[name=coin_filter]').focus()
+            topFunction()
+        }
+    })
+
+    setInterval(function(){ ajaxOrderBook() }, 3000);
+
+});
+
+function ajaxOrderBook() {
+    $.ajax({
+        dataType: 'json',
+        url: "{% url 'coins:ajax_order_book' %}",
+        success:function (data) {
+            drawOrderBookDraw(data.json_buy_order, 0)
+            drawOrderBookDraw(data.json_sell_order, 1)
+        }
+    })
+
+}
+
+function topFunction() {
+    document.body.scrollTop = 0; // For Safari
+    document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+}
+
+function setMarketPrice(){
+    $('.buy-limit-orders #id_price, .sell-limit-orders #id_price').val({% btc_price_in_sgd %});
+    $('.buy-market-orders #id_price, .sell-market-orders #id_price').val({% btc_price_in_sgd %});
+}
+
+function formatDate(day, month){
+    if(parseInt(day/10) <= 0)
+      day = '0'+day
+    if(parseInt(month/10) <=0)
+      month = '0'+month
+    return [day, month]
+}
+</script>
+<script>
+function changeCrypto() {
+    if ("{{is_otc}}" == '1') {
+        var cid = $('#cryptopairs').find(":selected").val();
+        var fid = $('#fiatpairs').find(":selected").val();
+        window.location = '/dashboard?cp='+cid+'&fp='+fid;
+    } else {
+        var cid = $('#cryptopairs').find(":selected").val();
+        var fid = 103-cid;
+        $('#fiatpairs').val(fid);
+        window.location = '/dashboard?cp='+cid+'&fp='+fid;
+    }
+}
+function changetoPair() {
+    if ("{{is_otc}}" == '1') {
+        var fid = $('#fiatpairs').find(":selected").val();
+        var cid = $('#cryptopairs').find(":selected").val();
+        window.location = '/dashboard?fp='+fid+'&cp='+cid;
+    } else {
+        var fid = $('#fiatpairs').find(":selected").val();
+        var cid = 103-fid;
+        $('#cryptopairs').val(cid);
+        window.location = '/dashboard?cp='+cid+'&fp='+fid;   
+    }
+}
+</script>
+<script>
+function chart(coin, name){
+    var priceList = {{price_list|safe}};
+
+    Highcharts.stockChart('chart', {
+        rangeSelector: {
+            inputStyle: {
+                color: '#fff',
+                background: 'black',
+            },
+            selected: 1
+        },
+        mapNavigation: {
+            enabled: true,
+            enableButtons: false
+        },
+        title: {
+          text: name.toUpperCase()+' - '+coin.toUpperCase(),
+          style:{
+            color: '#fff'
+          }
+        },
+        series: [{
+          name: name.toUpperCase()+' price in '+"{{to_pair}}",
+          data: priceList,
+          type: 'spline',
+          tooltip: {
+            valueDecimals: 2
+          }
+        }],
+    });
+}
+
+chart("{{base_pair}}",'Bitcoin');
+
+$('input[name=coin_filter]').on('change keyup', function () {
+    coinList("{{base_pair}}", $(this).val().trim().toLocaleLowerCase())
+})
+</script>
+<script>
+    function coinList(coin, filter){
+
+        $.ajax({
+            dataType: "json",
+            url: "{% url 'api:btcsgd' %}",
+            success: function (data) {
+                $('.my-coin-list').html('');
+                    if(data.short.trim().toLocaleLowerCase().includes(filter) || data.long.trim().toLocaleLowerCase().includes(filter)){
+                        html_data = "<tr id='"+data.short+"'>"
+                        html_data += "<td>"+ data.short +"</td>"
+                        html_data += "<td class='trade-price'>$"+ parseFloat(data.lastPrice).toFixed(4) +"</td>"
+                        html_data += "<td>"+ data.volume24hr+"</td>"
+                        if(parseFloat(data.change24hr)>0)
+                          html_data += "<td class='green'>+"+ data.change24hr +"</td>"
+                        else
+                          html_data += "<td class='red'>"+ data.change24hr +"</td>"
+
+                        html_data += "<td>"+ data.long +"</td></tr>"
+
+                        $('.my-coin-list').append(html_data);
+
+                        // setting chart headining trades
+
+                        $('.chart-header').text(coin.toUpperCase())
+                    }
+
+                
+            }
+        });
+    }
+
+    function chartShow(){
+      $.ajax({
+        url:'{% url "coins:depthchart" %}',
+        dataType:'json',
+        type:'get',
+        success:function(data){
+            drawDepthChart(data)
+        },
+        error:function(){
+            bootbox.alert("Error Occured!");
+        }
+      })
+    }
+
+
+    function drawDepthChart(data) {
+
+          var askData = data['asks'];
+          var bidData = data['bids'];
+          var askDepthTotal = parseFloat(0);
+          var bidDepthTotal = parseFloat(0);
+
+          for (var i = 0; i <askData.length; i++) {
+            price_in_btc = parseFloat((parseFloat(askData[i][0])*parseFloat(askData[i][1])).toFixed(8))
+            askDepthTotal += parseFloat(price_in_btc.toFixed(8));
+            askData[i][1] = askDepthTotal;
+            askData[i][0] = parseFloat(askData[i][0]);
+
+          }
+          for (var i = 0; i < bidData.length; i++) {
+
+
+            price_in_btc = parseFloat((parseFloat(bidData[i][0])*parseFloat(bidData[i][1])).toFixed(8))
+            bidDepthTotal += parseFloat(price_in_btc.toFixed(8));
+            bidData[i][1] = bidDepthTotal;
+            bidData[i][0] = parseFloat(bidData[i][0]);
+          }
+
+        var chart = Highcharts.chart('depth-chart', {
+            chart: {
+              type: 'area',
+              zoomType: 'xy'
+            },
+            title: {
+              text: "{{base_pair}}"+'-'+"{{to_pair}}"+' Market Depth',
+              style: {
+                color: '#fff'
+              }
+            },
+            subtitle: {
+              text: document.ontouchstart === undefined ?
+                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in',
+              style: {
+                color: '#fff'
+              }
+            },
+            xAxis: [{
+                type: 'logarithmic',
+                title: {
+                    text: 'Price',
+                    style: {
+                        color: '#00ff00'
+                    },
+                },
+                width: '50%',
+                labels: {
+                    style: {
+                        color: 'green'
+                    }
+                }
+            }, 
+            {
+                type: 'logarithmic',
+                title: {
+                    text: 'Price',
+                    style: {
+                        color: '#ff0000'
+                    },
+                },
+                labels: {
+                    style: {
+                    color: 'red'
+                    }
+                },
+                offset: 0,
+                left: '50%',
+                width: '50%'
+            }],
+
+            yAxis: {
+                gridLineWidth: 0,
+                title: {
+                    text: 'Depth',
+                    style: {
+                        color: '#fff'
+                    }
+                }
+            },
+            legend: {
+              enabled: false
+            },
+            plotOptions: {
+                area: {
+                    softThreshold: true,
+                    marker: {
+                        radius: 1
+                    },
+                    lineWidth: 2,
+                    states: {
+                        hover: {
+                            lineWidth: 2.5
+                        }
+                    },
+                    threshold: null
+                },
+            },
+            tooltip: {
+                shared: true,
+                useHTML: true,
+                headerFormat: '<table>',
+                pointFormat: '<tr><td>Price:</td><td style="text-align: right;">{point.x}</td></tr><tr><td>Sum ('+"{{to_pair}}"+'):</td><td style="text-align: right;">{point.y}</td></tr>',
+                footerFormat: '</table>',
+                valueDecimals: 2
+            },
+            series: [{
+                name: 'Bids',
+                data: bidData,
+                color: 'rgba(15, 216, 2, 1)',
+                fillColor: 'rgba(15, 216, 2, 0.3)',
+                xAxis: 0,
+            },
+            {
+                name: 'Asks',
+                data: askData,
+                color: 'rgba(255, 55, 15, 1)',
+                fillColor: 'rgba(255, 55, 15,  0.3)',
+                xAxis: 1,
+            }]
+        });
+    }
+
+</script>
+
+<script>
+    /*
+    try{
+        var socket = io.connect('https://coincap.io');
+
+        socket.on('trades', function (tradeMsg) {
+            current_val = $("#"+tradeMsg.coin+" > .trade-price").text();
+
+            html_data = "<td>"+ tradeMsg.message.msg.short +"</td>"
+            html_data += "<td class='trade-price'>$"+ parseFloat(tradeMsg.message.msg.price).toFixed(5) +"</td>"
+            html_data += "<td>"+ tradeMsg.message.msg.volume +"</td>"
+            if(parseFloat(tradeMsg.message.msg.perc)>0)
+              html_data += "<td class='green'>+"+ tradeMsg.message.msg.perc +"</td>"
+            else
+              html_data += "<td class='red'>"+ tradeMsg.message.msg.perc +"</td>"
+            html_data += "<td>"+ tradeMsg.message.msg.long +"</td>"
+
+            $("#"+tradeMsg.coin).html(html_data)
+        })
+    }
+    catch (e) {
+        console.log('hiii')
+    }
+*/
+</script>
+
+
+<script>
+  function ordersBuy(form_class_name,mode){
+      if('{{request.user.id}}' === 'None') {
+        window.location = '/auth/login'
+        return;
+      }
+      $('.'+form_class_name+' #id_user').val('{{request.user.id}}')
+      $('.'+form_class_name+' #id_order_type').val('0')
+      $('.'+form_class_name+' #id_order_mode').val(mode)
+      $('.'+form_class_name+' #id_exchange_form').val("{{to_pair}}")
+      $('.'+form_class_name+' #id_exchange_to').val("{{base_pair}}")
+      var fid = $('#fiatpairs').find(":selected").val();
+      if(fid > 100)
+        $('.'+form_class_name+' #id_is_otc').val(0)
+      else
+        $('.'+form_class_name+' #id_is_otc').val(1)
+      $('.errorlist').remove();
+      if(validate_input_fields(form_class_name)){
+          $('#submitted_form_class').val(form_class_name)
+          $('#myModal').modal('show')
+      }
+
+  }
+
+  function ordersSell(form_class_name, mode){
+      if('{{request.user.id}}' === 'None') {
+        window.location = '/auth/login'
+        return;
+      }
+      $('.'+form_class_name+' #id_user').val('{{request.user.id}}')
+      $('.'+form_class_name+' #id_order_type').val('1')
+      $('.'+form_class_name+' #id_order_mode').val(mode)
+      $('.'+form_class_name+' #id_exchange_form').val('{{base_pair}}')
+      $('.'+form_class_name+' #id_exchange_to').val('{{to_pair}}')
+      var fid = $('#fiatpairs').find(":selected").val();
+      if(fid > 100)
+        $('.'+form_class_name+' #id_is_otc').val(0)
+      else
+        $('.'+form_class_name+' #id_is_otc').val(1)
+      
+      $('.errorlist').remove();
+      if(validate_input_fields(form_class_name)){
+          $('#submitted_form_class').val(form_class_name)
+          $('#myModal').modal('show')
+      }
+  }
+
+  function call_ajax_form_submit_for_orders() {
+      $('#myModal').modal('hide');
+      var form_class_name = $('#submitted_form_class').val()
+      frm = $('.'+form_class_name);
+      setTimeout(callAjax(frm),5000)
+
+  }
+
+  function validate_input_fields(form_class_name) {
+      var price = $('.'+form_class_name+' input[name="price"]').val();
+      var amount = $('.'+form_class_name+' input[name="amount"]').val();
+      var total = $('.'+form_class_name+' input[name="total"]').val();
+      flag = true
+      if(price == ""){
+        $('.'+form_class_name+' input[name="price"]').parent().after('<span class="errorlist">This field is required</span>');
+        flag = false
+      }
+      else{
+          price_val = parseFloat(price)
+          if(price_val<=0){
+            $('.'+form_class_name+' input[name="price"]').parent().after('<span class="errorlist">Price can\'t be zero or less </span>');
+            flag = false
+          }
+      }
+      if(amount == ""){
+        $('.'+form_class_name+' input[name="amount"]').parent().after('<span class="errorlist">This field is required</span>');
+        flag = false
+      }
+      else{
+          amount_val = parseFloat(amount)
+          if(amount_val<=0){
+            $('.'+form_class_name+' input[name="amount"]').parent().after('<span class="errorlist">Amount can\'t be zero or less </span>');
+            flag = false
+          }
+      }
+      if(total == ""){
+        $('.'+form_class_name+' input[name="total"]').parent().after('<span class="errorlist">This field is required</span>');
+        flag = false
+      }
+      return flag;
+  }
+
+  function callAjax(form){
+
+      $.ajax({
+          type: frm.attr('method'),
+          dataType:'json',
+          url: frm.attr('action'),
+          data: frm.serialize(),
+          async: false,
+          success: function (data) {
+              if(!data.status){
+                alert(data.error)
+                }
+              else {
+                drawOrderBookDraw(data.data, frm.find('#id_order_type').val())
+                chartShow()
+                alert(data.message)
+                }
+              frm[0].reset();
+              setMarketPrice()
+          },
+          error: function(data) {
+              alert('Error........')
+          }
+      });
+  }
+  function drawParseOrderBookDraw(data,type){
+      if(data){
+        html_data = ''
+        DepthTotal = 0
+        console.log(data);
+        if("{{is_otc}}" == '1'){
+            orders = data.filter(function(od) {
+                return ((od.fields.exchange_form=="{{base_pair}}")||(od.fields.exchange_form=="{{to_pair}}"))&&((od.fields.exchange_to=="{{base_pair}}")||(od.fields.exchange_to=="{{to_pair}}"))&&(od.fields.amount-od.fields.coins_covered>0.00001)
+            })
+        } else {
+            orders = data.filter(function(od) {
+                if(od.fields.order_type == 1) {
+                    return (od.fields.exchange_form=="{{base_pair}}")&&(od.fields.exchange_to=="{{to_pair}}")&&(od.fields.amount-od.fields.coins_covered>0.00001)
+                } else {
+                    return (od.fields.exchange_form=="{{to_pair}}")&&(od.fields.exchange_to=="{{base_pair}}")&&(od.fields.amount-od.fields.coins_covered>0.00001)
+                }
+            })
+        }
+        for(i=0;i<orders.length;i++){
+          html_data += "<tr onclick=tradePopup("+orders[i].pk+","+type+","+(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))+",\""+orders[i].fields.exchange_form+"\",\""+orders[i].fields.exchange_to+"\","+orders[i].fields.user+","+orders[i].fields.price+","+orders[i].fields.is_otc+") ><td>"+parseFloat(orders[i].fields.price)+"</td>"
+          html_data += "<td>"+(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))+"</td>"
+          price_in_sgd = parseFloat((orders[i].fields.price)*(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))).toFixed(4)
+          html_data += "<td>"+price_in_sgd+"</td>"
+          DepthTotal = parseFloat(DepthTotal) + parseFloat(price_in_sgd);
+          if(type == '1')
+            $('.ask-table > tbody').html(html_data)
+          else
+            $('.bid-table > tbody').html(html_data)
+        }
+      }
+
+  }
+
+  function drawOrderBookDraw(data, type){
+    // console.log(data,"==========this is data==================== {{base_pair}} , {{to_pair}}");
+      if(data){
+        data = JSON.parse(data)
+        drawParseOrderBookDraw(data, type)
+      }
+
+  }
+
+  function tradePopup(pk, type, amount, exchange_form, exchange_to, order_holder, price, is_otc) {
+    $("#order-pk").val(pk)
+    $("#order-pk").hide()
+    is_otc==1?$("#recipient-amount").data('limit', amount):$("#recipient-amount").data('limit', price*amount)
+    $("#acceptorderModal .errorlist").hide()
+    $("#recipient-amount").val("0.00")
+    if(type == 1) {    
+        $("#acceptorderModal .btn-success").html("BUY")
+    } else {
+        $("#acceptorderModal .btn-success").html("SELL")
+    }
+    request_pk = pk
+    request_order_type = type
+    request_price = price
+    request_exchange_from = exchange_form
+    request_exchange_to = exchange_to
+    request_order_holder = order_holder
+    request_is_otc = is_otc
+    is_otc==1?available_balance = parseFloat('{% get_crypto_balance request.user %}'):available_balance = parseFloat('{% get_crypto_balance_new request.user %}')
+    $("#acceptorderModal #available_amount").html(available_balance)
+    $("#acceptorderModal").modal()
+  }
+
+  function accept_order() {
+      // body...
+      var amount = parseFloat($("#recipient-amount").val())
+      limit = $("#recipient-amount").data('limit')
+      request_is_otc==1?available_balance = parseFloat('{% get_crypto_balance request.user %}'):available_balance=parseFloat('{% get_crypto_balance_new request.user %}')
+      if(amount == 0) {
+        $("#acceptorderModal .errorlist").show()
+      }else {
+        if($("#acceptorderModal .btn-success").html()=="BUY") {
+            if(request_is_otc == 1) {
+                if(amount > limit) {
+                    $("#acceptorderModal .errorlist").show()
+                } else {
+                    $("#acceptorderModal .errorlist").hide()
+                    $( "#acceptorderModal form" )[0].submit()
+                }
+            } else {
+                if(amount > limit || amount > available_balance) {
+                    $("#acceptorderModal .errorlist").show()
+                }else {
+                    $("#acceptorderModal .errorlist").hide()
+                    var csrftoken = getCookie('csrftoken')
+                    var data = {
+                        'amount': parseFloat(amount/request_price),
+                        'order': request_pk,
+                        'is_otc': request_is_otc,
+                        'user': parseInt('{{ request.user.id }}')  
+                    }
+                    $.ajax({
+                        url: "{% url 'coins:confirm_request_pendings' %}",
+                        type: 'POST',
+                        headers:{
+                            "X-CSRFToken": csrftoken
+                        },
+                        data: data,
+                        cache: true,
+                        success: function(data) {
+                            if(!data.status){
+                                console.log(data.error)
+                                alert(data.error)
+                            }
+                            else {
+                              $("#acceptorderModal").modal('hide');
+                            }
+                        }
+                    });
+                }
+            }
+        } else {
+            // if(request_is_otc == 1) {
+            //     if(amount > limit) {
+            //         $("#acceptorderModal .errorlist").show()
+            //     } else {
+            //         $("#acceptorderModal .errorlist").hide()
+            //         $( "#acceptorderModal form" )[0].submit()
+            //     }
+            // } else {
+                if(amount > limit || amount > available_balance) {
+                $("#acceptorderModal .errorlist").show()
+                } else {
+                    $("#acceptorderModal .errorlist").hide()
+                    var csrftoken = getCookie('csrftoken');
+                    if(request_is_otc == 1) {
+                        var data = {
+                            'amount': amount*request_price,
+                            'crypto_amount': amount,
+                            'fiat_type': request_exchange_from,
+                            'crypto_type': request_exchange_to,
+                            'sender': parseInt('{{ request.user.id }}'),
+                            'receiver': request_order_holder,
+                            'order': request_pk,
+                            'is_otc': request_is_otc
+                        };
+                    } else {
+                        var data = {
+                            'amount': parseFloat(amount/request_price),
+                            'order': request_pk,
+                            'is_otc': request_is_otc,
+                            'user': parseInt('{{ request.user.id }}')
+                        };
+                    }
+                    $.ajax({
+                        url: "{% url 'coins:confirm_request_pendings' %}",
+                        type: 'POST',
+                        headers:{
+                            "X-CSRFToken": csrftoken
+                        },
+                        data: data,
+                        cache: true,
+                        success: function(data) {
+                            if(!data.status){
+                                console.log(data.error)
+                                alert(data.error)
+                            }
+                            else {
+                              $("#acceptorderModal").modal('hide');
+                            }
+                        }
+                    });
+                // }
+            }
+            
+        }
+      }
+
+  }
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+          var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+         var cookie = jQuery.trim(cookies[i]);
+    // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) == (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+         }
+      }
+    }
+     return cookieValue;
+  }
+
+</script>
+{% endblock %}

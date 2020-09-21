@@ -1,0 +1,157 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load transaction_status %} 
+{% load i18n %}
+{% block title %}Send to Vault{% endblock title %}
+
+{% block content %}
+    <div class="send-coin ">
+        <div class="container">
+            <h2 class="Ubuntu mb20">{% trans "Send To Vault" %}</h2>
+            <div class="row mb50 send-coin-wrap">
+                <div class="row m0">
+                    <h4 class="m30"> <b>{% trans "BTC Main Wallet Details" %}</b> </h4>
+                    <div class="row m0 wallet-details">
+                        <div class="col-sm-6">
+                            <img class="d-inline-block" src="{% static 'img/bitcoin.png' %}" width="40px">
+                            <p class="d-inline-block mf10"><b>BTC</b></p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="m10 f-medium" align="right">{% trans "Balance" %}: {% get_account_balance_btc %} BTC</p>
+                            <p class="m10 f-medium" align="right"> {% trans "Current Minimum Limit" %}: {% get_minimum_limit_btc %} BTC</p>
+                        </div>
+                    </div>
+                    <form id="wallettovault" method="post" action="{% url 'coins:wallet_to_vault' %}">
+                        {% csrf_token %}
+                        <h4 class="m30"><b>{% trans "Amount to Send" %}</b></h4>
+                        <div class="form-group">
+                            <input id="amt_2_vault" class="form-control"  placeholder="{% trans "Enter the Amount to send" %}" name="amount" value="{{form.amount.value}}">
+                            <div class="errorlist">{{form.amount.errors|striptags}}</div>
+                        </div>
+
+                        <h4 class="m30"><b>{% trans "Public Address" %}</b></h4>
+                        <div class="form-group">
+                            <input id="vault_address" class="form-control"  placeholder="{% trans "Enter Address to Send" %}" name="address" value="{{form.address.value}}">
+                            <div class="errorlist">{{form.address.errors|striptags}}</div>
+                        </div>
+
+                        <div align="right">
+                            <a href="{% url 'welcome' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> {% trans "BACK TO DASHBOARD" %}</a>
+                            <button type="submit" id="submit_amount" class="btn-main btn m20" >  {% trans "CONFIRM" %} </button>
+                        </div>
+
+                    </from>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="otp-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding-top: 40px;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="message-text"> {% trans "Enter SMS OTP" %}</h4>
+                <input name="otp"/>
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+                <button type="button" onclick="sendOTP()" class="btn btn-default" style="width: 200px;margin: 0px 11px;">{% trans "Submit" %}</button>
+                <button type="button" onclick="resendOTP()" class="send-otp-btn btn btn-default" style="width: 200px;margin: 0px 11px;">{% trans "Resend" %}</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+    <div id="success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <div class="modal-body m50 text-center">
+                    <img class="m30" src="{% static 'img/important.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Important" %}</h3>
+                    &nbsp;
+                    <h4 class="Ubuntu m0 text-center">{% trans "An email has been send to you" %}. <br>{% trans "Please click on the link in the email to confirm the withdrawal" %}</h4>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'welcome' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding: 50px 10px">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+                <h4 class="Ubuntu m0"></h4>
+            </div>
+        </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+<script>
+
+    {% if sms_verification %}
+        $('#otp-modal').modal('show');
+    {% endif %}
+
+    /* code only for testing starts here */
+    {% if success %}
+        $('#success-modal').modal('show');
+    {% endif %}
+    /* code only for testing end here */
+
+    function resendOTP(){
+        $.ajax({
+            type: "POST",
+            url: "{% url 'coins:confirm_wallet_to_vault' %}",
+            data: {
+                'resend-otp': true,
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            }
+        });
+    }
+
+    function sendOTP(){
+        var value = $('#otp-modal input').val();
+        $.ajax({
+            type: "POST",
+            url: "{% url 'coins:confirm_wallet_to_vault' %}",
+            data: {
+                'value': value,
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                $("#otp-modal, #error-modal, #success-modal").modal("hide");
+                $("#otp-modal .send-otp-btn").hide();
+                $('#otp-modal input').val('');
+
+                if(data['success'] == true){
+                    $("#success-modal").modal("show");
+                }else if(data['status'] == 'otp-not-verified'){
+                    $("#otp-modal .message-text").html('Invalid OTP. Try again.')
+                    $("#otp-modal .send-otp-btn").show();
+                    $("#otp-modal").modal("show");
+                }else if(data['status'] == 'get-totp'){
+                    $("#otp-modal .message-text").html('Enter Google Authentication Code')
+                    $("#otp-modal").modal("show");
+                }else if(data['status'] == 'totp-not-verified'){
+                    $("#otp-modal .message-text").html('Invalid Google Authentication Code. Try again.')
+                    $("#otp-modal").modal("show");
+                }else if(data['error']){
+                    $("#error-modal .modal-body h4").html(data['error']);
+                    $("#error-modal").modal("show");
+                }
+            }
+        });
+    }
+</script>
+{% endblock script %}

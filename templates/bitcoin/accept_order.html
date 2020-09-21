@@ -1,0 +1,190 @@
+{% extends 'base.html' %}  
+{% load static %}
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Buy Orders" %}{% endblock %}
+
+{% block content %}
+<div class="trans">
+  <div class="container">
+    {% with tradingorder.all|first as orders %}
+    <h2 class="Ubuntu mf15">
+      {% trans "Buy" %} {{ to_amount }}
+      {% if orders.order_type == "1" %} {{ orders.exchange_from|upper }} {%else %} {{ orders.exchange_to|upper }} {% endif %} {% trans "From" %}
+      {% if orders.order_type == "1" %}{{ orders.user.username }}{% else %}{{email}}{% endif %}</h2>
+     <hr style="border-top: 1px solid #ff360e;">
+    <div class="row m0">
+      <div class="col-sm-12">
+        <h3>{% trans "Please don't refresh or close window. Make payment in " %} <span id="timer" style="color: #ff360e;"></span>.</h3>
+       <div class="trans-details">
+        <div class="tab-content">
+          <h3>{% trans "Price" %}: {{orders.price}} {{orders.exchange_form}}/{{orders.exchange_to}}</h3>
+          <h3>{% trans "Amount" %}: {{from_amount}} {{orders.exchange_to}}</h3>
+            <h3>{% trans "Bank Info" %}: <br/></h3>
+              {% with bank_accounts.all|first as bank_account %}
+              {% trans "Account Number" %}: {{bank_account.account_number}}<br/>
+              {% endwith %}
+            <h3>{% trans "Wechat Info" %}: <br/></h3>
+              {% for wechat_account in wechat_accounts %}
+                {% trans "Wechat Id" %}: {{wechat_account.wechat_account}}<br/>
+                <div align="center"><img src="/media/{{wechat_account.wechat_qr}}" class="m50" style="width: 150px"></div> 
+              {% endfor %}
+            <h3>{% trans "Alipay Info" %}: <br/></h3>
+              {% for alipay_account in alipay_accounts %}
+                {% trans "Alipay Name" %}: {{alipay_account.alipay_name}}<br/>
+                {% trans "Alipay Number" %}: {{alipay_account.alipay_number}}<br/>
+                <div align="center"><img src="/media/{{alipay_account.alipay_qr}}" class="m50" style="width: 150px"></div> 
+              {% endfor %}
+        </div>
+      </div><br/>
+      <div class="col-sm-12 col-md-4">
+        <button  class="btn btn-block buy-btn pay-btn" onclick="confirmPayment()" type="button">{% trans "Pay" %}</button>
+      </div>
+      <div class="col-sm-12 col-md-4">
+        <button  class="btn btn-block buy-btn" type="button">{% trans "Contact Support" %} {{phone_number}}</button>
+      </div>
+      <div class="col-sm-12 col-md-4">
+        <a href="{% url 'coins:cancel_pending_order' pk=pending_obj %}" class="btn btn-block sell-btn" type="button">{% trans "Cancel" %}</a>
+      </div>
+     </div>
+    </div>
+    <script>
+      var alert_message = '{{alert}}';
+      if (alert_message != "") {
+        alert(alert_message);
+        window.location = '/crypto/settings';
+      }
+      function sendConfirm() {
+        var csrftoken = getCookie('csrftoken');
+        amount = parseFloat("{{from_amount}}");
+        crypto_amount = parseFloat("{{to_amount}}");
+        order_id = parseInt("{{orders.id}}");
+        order_type = "{{orders.order_type}}";
+        if(order_type == '1') { // Buy order
+          var data = {
+            'amount': amount,
+            'crypto_amount': crypto_amount,
+            'fiat_type': "{{ orders.exchange_to|upper }}",
+            'crypto_type': "{{ orders.exchange_form|upper }}",
+            'receive_address': $("#receive_address").val(),
+            'receiver': parseInt("{{orders.user_id}}"),
+            'sender': parseInt("{{request_user}}"),
+            'order': order_id,
+            'pending_order': {{pending_obj}}
+          };
+        } else if(order_type == '0') { // Sell order
+          var data = {
+            'amount': amount,
+            'crypto_amount': crypto_amount,
+            'fiat_type': "{{ orders.exchange_form|upper }}",
+            'crypto_type': "{{ orders.exchange_to|upper }}",
+            'receive_address': $("#receive_address").val(),
+            'sender': parseInt("{{orders.user_id}}"),
+            'receiver': parseInt("{{sender}}"),
+            'order': order_id,
+            'pending_order': {{pending_obj}}
+          };
+        }
+        $.ajax({
+            url: "{% url 'coins:confirm_fiat_pendings' %}",
+            type: 'POST',
+            headers:{
+                "X-CSRFToken": csrftoken
+            },
+            data: data,
+            cache: true,
+            success: function(data) {
+              $("#confirm-modal").modal('hide');
+              $("#success-modal").modal();
+              $('.pay-btn').prop('disabled', true);
+              $(".pay-btn").html('Pending');
+              window.location.href = "{% url 'welcomeotc' %}";
+            }
+        });
+      }
+    </script>
+    {% endwith %}
+  </div>
+</div>
+
+ <div id="success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body m50 text-center">
+                <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                <h3 class="Ubuntu">{% trans "Notification sent to Order holder. Please wait until order is confirmed" %}.</h3>
+                &nbsp;
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+                <a style="" class="btn btn-main" data-dismiss="modal">{% trans "OK" %}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirm-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+  <div class="modal-dialog modal-xs">
+      <div class="modal-content">
+          <div class="modal-body" style="padding: 50px 10px">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <img class="m30" src="{% static 'img/important.png' %}" width="40%">
+              <h4 class="Ubuntu m0">{% trans "Notify order holder with message" %}</h4><br/>
+              <textarea class="form-control" rows="5" id="receive_address" placeholder="{% trans "Please describe about where you make payment" %}"></textarea>
+          </div>
+          <div class="pop-footer" style="text-align: center;">
+              <a style="" href="javascript:void(0)" onclick="sendConfirm()" class="btn btn-main">{% trans "Confirm" %}</a>
+              <a style="" data-dismiss="modal" class="btn btn-main">{% trans "Cancel" %}</a>
+          </div>
+      </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block script %}
+<script>
+    var distance = 30*60*1000;
+    var x = setInterval(function() {
+      // Get today's date and time
+      // Find the distance between now and the count down date
+      // Time calculations for days, hours, minutes and seconds
+      var minutes = Math.floor((distance % (1000*60*60))/(60*1000));
+      var seconds = Math.floor(distance % (1000*60)/1000);
+      distance -= 1000;
+      console.log(distance, minutes, seconds);
+      // Display the result in the element with id="demo"
+      document.getElementById("timer").innerHTML = minutes + "m " + seconds + "s ";
+
+      // If the count down is finished, write some text 
+      if (distance < 0) {
+        clearInterval(x);
+        document.getElementById("timer").innerHTML = "{% trans "EXPIRED" %}";
+        window.location.href = "{% url 'coins:cancel_pending_order' pk=pending_obj %}";
+      }
+    }, 1000);
+
+  function confirmPayment() {
+    $('#confirm-modal').modal('show');
+  }
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+          var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+         var cookie = jQuery.trim(cookies[i]);
+    // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) == (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+         }
+      }
+    }
+     return cookieValue;
+  }
+
+</script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

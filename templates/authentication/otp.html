@@ -1,0 +1,28 @@
+{% extends 'base.html' %} {% load static %}
+{% load i18n %}
+{% block title %}{% trans "Enter OPT" %}{% endblock %}
+
+{% block content %}
+
+<section class="Sign-wrapper">
+    <div class="container content-block">
+        <div class="col-sm-5 col-sm-offset-4">
+            <h1 class="mt4em" style="text-align:center"> {% trans "Enter Your" %} <b>OTP</b></h1>
+			<div style="color: red;">{{ error }}</div>
+			<form class="contact-form columns_padding_10" method="post" action=".">
+				{% csrf_token %}
+				<div class="form-group">
+					<input type="text" size="30" value="" name="otp" id="id_otp" class="form-control" placeholder="OTP" required>
+					<div class="errorlist">{{otp_required}}</div>
+					<a href="{% url 'send_otp' %}" class="pull-right Resend"> <span class="glyphicon glyphicon-repeat"></span> {% trans "Resend" %}</a>
+				</div>
+				<div align="center"> <button type="submit" class="btn btn-default m20">{% trans "Verify" %}</button></div>
+			</form>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

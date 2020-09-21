@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+{% load static %}
+{% load i18n %}
+
+<html class="no-js" lang="">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Tixonxchange | {% block title %}Index{% endblock %}</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="{% static 'css/intlTelInput.css' %}">
+    <link rel="stylesheet" href="{% static 'css/ui-datepicker.css' %}">
+    <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+    {% block extra_styles %}{% endblock %}
+
+    <!--scripts-->
+</head>
+<body style="min-height: 100vh;position: relative;">
+
+{% block header %}
+{% if user.is_authenticated and 2fa_verified %}
+<nav class="navbar navbar-inverse nav-sub">
+    <div class="container-fluid p0">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="{%  url 'index' %}"><img src="{% static 'img/sub-logo.png' %}"></a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/otcdashboard/?fp=1&cp=2">{% trans "OTC" %}</a></li>
+                <li><a href="/dashboard/?fp=102&cp=1">{% trans "CTC" %}</a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">{% trans 'Balances' %}<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'coins:wallets' %}">{% trans "Wallet" %}</a></li>
+                        <li><a href="{% url 'coins:transaction_list' %}">{% trans "Transactions" %}</a></li>
+                        <li><a href="{% url 'coins:report' %}">{% trans "Report" %}</a></li>
+                        {% if request.user.is_superuser %}
+                        <li><a href="{% url 'coins:get_all_wallet_users' %}">{% trans "User Accounts" %}</a></li>
+                        <!-- <li><a href="{% url 'coins:sgd_wallets' %}">{% trans "SGD Wallets" %}</a></li> -->
+                        <li><a href="{% url 'fees:withdraw_fee' %}">{% trans "Fees Withdrawal" %}</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">{% trans 'Orders' %} <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'coins:buy_order_list' %}">{% trans "Buy Orders" %}</a></li>
+                        <li><a href="{% url 'coins:sell_order_list' %}">{% trans "Sell Orders" %}</a></li>
+                        <li><a href="{% url 'coins:confirm_fiat_pendings' %}">{% trans "Fiat Requests" %}</a></li>
+                        <li><a href="{% url 'coins:confirm_request_pendings' %}">{% trans "Crypto Requests" %}</a></li>
+                    </ul>
+                </li>
+                <li ><a href="{% url 'coins:settings' %}"><i class="fa fa-wrench"></i></a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-user"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'welcome' %}">{% trans "DashBoard" %}</a></li>
+                        <li><a href="{% url 'coins:my_list_dispute' %}">{% trans "My Dispute List" %}</a></li>
+                        <li><a href="{% url 'coins:raise_dispute' %}">{% trans "Raise Dispute" %}</a></li>
+                        {% if request.user.is_superuser %}
+                        <li><a href="{% url 'coins:dispute_processing_list' %}">{% trans "Dispute List" %}</a></li>
+                        <li><a href="{% url 'kyc_list' %}">{% trans "Kyc Uploads" %}</a></li>
+                        <li><a href="{% url 'coins:pending_transactions' %}">{% trans "Pending Withdrawal" %}</a></li>
+                        <li><a href="{% url 'coins:wallet_to_vault' %}">{% trans "Send to Vault" %}</a></li>
+                        <li><a href="{% url 'coins:vault_to_wallet' %}">{% trans "Add Wallet Amount" %}</a></li>
+                        <li><a href="{% url 'coins:set_minimum_limit' %}">{% trans "Set Minimum Limit" %}</a></li>
+                        <li><a href="{% url 'coins:dispute_system' %}">{% trans "Dispute" %}</a></li>
+                        <li><a href="{% url 'coins:set_market_limit' %}">{% trans "Set Market Limit" %}</a></li>
+                        <li><a href="{% url 'coins:vault_transaction_list' %}">{% trans "Vault Transactions" %}</a></li>
+                        <li><a href="{% url 'coins:transaction_record' %}">{% trans "Transaction Record" %}</a></li>
+                        <li><a href="{% url 'coins:vault_list' %}">{% trans "Vault List" %}</a></li>
+                        <!-- <li><a href="{% url 'fees:mining_fees' %}">Set Mining Fees</a></li> -->
+                        <li><a href="{% url 'fees:transaction_fee_list' %}">{% trans "Transaction Fees" %}</a></li>
+                        <!-- <li><a href="{% url 'fees:transaction_fee_withdrawal_list' %}">{% trans "Fees History" %}</a></li> -->
+                        {% endif %}
+                        <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-globe"></i>{% trans 'Lang' %} <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li onclick="onLanguage(1)"><a href="#"><img src="{% static 'img/flag_cn.jpg' %}" alt="" class="lang-icon"> {% trans "Chinese" %}</a></li>
+                        <li onclick="onLanguage(2)"><a href="#"><img src="{% static 'img/flag_en.jpg' %}" alt="" class="lang-icon"> {% trans "English" %}</a></li>
+                   </ul>
+                </li>
+                <li ><a href="{% url 'coins:notifications' %}">{% if notification_count != 0 %}<span id="notification-count">{{notification_count}}</span>{% endif %}<i class="fas fa-bell"></i></a></li>
+                <form action="{% url 'set_language' %}" method="post" style="display: none" class="languageform">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ redirect_to }}" />
+                    <select name="language">
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% get_available_languages as LANGUAGES %}
+                        {% for lang in LANGUAGES %}
+                            <option value="{{ lang.0 }}" {% if lang.0 == LANGUAGE_CODE %} selected="selected"{% endif %}>
+                                {{ lang.1 }} ({{ lang.0 }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="Go" />
+                </form>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% else %}
+<nav class="navbar navbar-inverse sub-nav">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand navbar-brand col-xs-8 col-sm-12" href="{% url 'index' %}"> <img src="{% static 'img/logo.png' %}" class="img-responsive" /> </a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">{% trans 'Market' %}<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/otcdashboard/?fp=1&cp=2">{% trans "OTC" %}</a></li>
+                        <li><a href="/dashboard/?fp=102&cp=1">{% trans "CTC" %}</a></li>
+                    </ul>
+                </li>
+                <li><a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i>{% trans "Sign In" %}</a></li>
+                <li><a href="{% url 'signup' %}"><i class="fas fa-user-plus"></i> {% trans "Register" %}</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="index-top">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6 col-sm-offset-3">
+                <div class="outer">
+                    <div class="middle">
+                        <div class="inner">
+                            <img class="bull" src="{% static 'img/bull.png' %}">
+                            <h1><b>{% trans "Buy & Sell Digital Currency" %}</b></h1>
+                            <h4>Aeneas vulputate erleidend tells. Aenean leo ligula, porttutor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, vierra quis, feugiat a, tellus. Phasellus ut mets varius laereet.</h4>
+                            <div class="get_started">
+                                <form action="{% url 'get_started' %}" method="post">
+                                    {% csrf_token %}
+                                    <input placeholder="{% trans "Enter your email address" %}" name="email" type="email" required>
+                                    <button>{% trans "GET STARTED" %}</button>
+                                </form>
+                            </div>
+                            <a href="#section2" class="smooth">
+                                <h4 style="
+                                                    color: white;
+                                                    margin-top: 0px;
+                                                    position: absolute;
+                                                    width: 100%;
+                                                    bottom: 5px;
+                                                    ">scroll
+                                    <i class="fa fa-arrow-down d-block" id="scroll_to_section2" style="color:white;display: block;margin-top: 5px;"></i>
+                                </h4>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="our-features" id="section2">
+    <div class="container">
+        <div class="col-sm-10 col-sm-offset-1">
+            <h1><b>Our</b> Features</h1>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="row box">
+                        <div align="center" class="col-sm-4">
+                            <img src="{% static 'img/image1.png' %}">
+                        </div>
+                        <div class="col-sm-8">
+                            <h4>MOBILE APPS</h4>
+                            <p>Our popular wallet works on your Android or iPhone with your web browser</p>
+                            <a href="#" style="font-weight:bold"> <i class="glyphicon glyphicon-arrow-right"></i> Read More</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="row box">
+                        <div align="center" class="col-sm-4">
+                            <img src="{% static 'img/image2.png' %}">
+                        </div>
+                        <div class="col-sm-8">
+                            <h4>SECURE STORAGE</h4>
+                            <p>We store the vast majority of the digital assets in secure offline storage</p>
+                            <a href="#" style="font-weight:bold"> <i class="glyphicon glyphicon-arrow-right"></i> Read More</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="row box">
+                        <div align="center" class="col-sm-4">
+                            <img src="{% static 'img/image3.png' %}">
+                        </div>
+                        <div class="col-sm-8">
+                            <h4>100% PROTECTION</h4>
+                            <p>Digital currency stored on our servers is covered by our insurance policy</p>
+                            <a href="#" style="font-weight:bold"> <i class="glyphicon glyphicon-arrow-right"></i> Read More</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="row box">
+                        <div align="center" class="col-sm-4">
+                            <img src="{% static 'img/image4.png' %}">
+                        </div>
+                        <div class="col-sm-8">
+                            <h4>MARKETPLACE</h4>
+                            <p>Trade bitcoin and ether across 3 order books with six different order types</p>
+                            <a href="#" style="font-weight:bold"> <i class="glyphicon glyphicon-arrow-right"></i> Read More</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="row box">
+                        <div align="center" class="col-sm-4">
+                            <img src="{% static 'img/image5.png' %}">
+                        </div>
+                        <div class="col-sm-8">
+                            <h4>FRIENDLY API</h4>
+                            <p>The world’s most popular digital currency API for your services</p>
+                            <a href="#" style="font-weight:bold"> <i class="glyphicon glyphicon-arrow-right"></i> Read More</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="row box">
+                        <div align="center" class="col-sm-4">
+                            <img src="{% static 'img/image6.png' %}">
+                        </div>
+                        <div class="col-sm-8">
+                            <h4>RECURRING BUYS</h4>
+                            <p>Invest in digital currency over time by scheduling buys weekly or monthly.</p>
+                            <a href="#" style="font-weight:bold"> <i class="glyphicon glyphicon-arrow-right"></i> Read More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="section3">
+    <div class="ticker" id="btcusd">
+        <div class="ticker_name">BITCOIN / USD</div>
+        <div class="ticker_price">$ 8255.28</div>
+        <div class="ticker_change" style="color: green;"><i class="fa fa-caret-up"></i>171.37870740(2.12%)</div>
+    </div>
+    <div class="ticker" id="btcusd">
+        <div class="ticker_name">BITCOIN / USD</div>
+        <div class="ticker_price">$ 8255.28</div>
+        <div class="ticker_change" style="color: green;"><i class="fa fa-caret-up"></i>171.37870740(2.12%)</div>
+    </div>
+    <div class="ticker" id="btcusd">
+        <div class="ticker_name">BITCOIN / USD</div>
+        <div class="ticker_price">$ 8255.28</div>
+        <div class="ticker_change" style="color: green;"><i class="fa fa-caret-up"></i>171.37870740(2.12%)</div>
+    </div>
+    <div class="ticker" id="btcusd">
+        <div class="ticker_name">BITCOIN / USD</div>
+        <div class="ticker_price">$ 8255.28</div>
+        <div class="ticker_change" style="color: green;"><i class="fa fa-caret-up"></i>171.37870740(2.12%)</div>
+    </div>
+    <div class="ticker" id="btcusd">
+        <div class="ticker_name">BITCOIN / USD</div>
+        <div class="ticker_price">$ 8255.28</div>
+        <div class="ticker_change" style="color: green;"><i class="fa fa-caret-up"></i>171.37870740(2.12%)</div>
+    </div>
+</section>
+<section class="section4">
+    <div class="container-fluid">
+        <div class="row" style="padding-top: 50px; padding-bottom: 50px;">
+            <div align="center" class="col-sm-3 col-sm-offset-2"
+            ">
+            <img src="{% static 'img/homepage_background3.png' %}" style="
+                                        margin-top: 7em;
+                                        margin-bottom: 5em;
+                                        width: 80%;
+                                        ">
+        </div>
+        <div class="col-sm-5">
+            <div class="fundsecurity_right">
+                <div class="above">
+                    <h1><b>Fund</b> Security</h1>
+                </div>
+                <div class="below">
+                    <h4>All U.S. Dollar deposits are held at FDIC-insured banks. The majority of digital assets are stored offline in our proprietary, state-of-the-art Cold Storage system.</h4>
+                    <div style="margin-left: 32px;" class="securitycodex"><i class="glyphicon glyphicon-lock"><span style="margin-left:20px;font-family: sans-serif;color:black"> OUR SECURITY CODEX</span></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+<section class="section5">
+    <div class="container">
+        <div class="col-sm-6">
+            <h1 style="    margin-top: 2.5em;"><b>Create an account</b> </h1>
+            <h1>to start exchange</h1>
+            <h4 style="color:grey;line-height:2em">Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus ut metus varius laoreet.</h4>
+        </div>
+        <div class="col-sm-6" align="center">
+            <a href="{% url 'signup' %}" class="create_account btn">CREATE ACCOUNT</a>
+
+            <p style="text-align:center;font-size: 20px;">ALREADY A MEMBER? <a style="font-weight:bold;color:white" href="{% url 'login' %}">SIGN IN</a></p>
+        </div>
+    </div>
+</section>
+<section class="section6">
+    <div class="above">
+        <img src="{% static 'img/image7.png' %}" style="margin-bottom:30px">
+        <h1 style="margin-bottom:25px"><b>Your Bridge</b> to the Future of Money</h1>
+        <h4 style="color:grey;margin-bottom:0">We built a best-in-class digital asset exchange from the ground up to put the safety and security of</h4>
+        <br>
+        <h4 style="color:grey;margin-top:0">your assets first. Gemini is a fully compliant and transparent digital asset platform.</h4>
+    </div>
+</section>
+{% endblock %}
+
+{% block footer %}
+<footer>
+    <div class="container-fluid mb40">
+        <div class="row">
+            <div class="col-sm-2 p0">
+                <h2>PRODUCTS</h2>
+                <div class="footer-links">
+                    <a href="#">Buy/Sell Digital </a>
+                    <a href="#">Currency </a>
+                    <a href="#">GDAX </a>
+                    <a href="#">Developer Platform </a>
+                    <a href="#">Merchant Tools </a>
+                </div>
+            </div>
+            <div class="col-sm-2 p0">
+                <h2>SUPPORT</h2>
+                <div class="footer-links">
+                    <a href="#">FAQ </a>
+                    <a href="#">Currency </a>
+                    <a href="#">Status </a>
+                </div>
+            </div>
+            <div class="col-sm-2 p0">
+                <h2>LEARN</h2>
+                <div class="footer-links">
+                    <a href="#">Buy Bitcoin </a>
+                    <a href="#">Buy Bitcoin Cash </a>
+                    <a href="#">Buy Ethereum </a>
+                    <a href="#">Buy Litecoin </a>
+                </div>
+            </div>
+            <div class="col-sm-2 p0">
+                <h2>COMPANY</h2>
+                <div class="footer-links">
+                    <a href="#">About </a>
+                    <a href="#">Careers </a>
+                    <a href="#">Press </a>
+                    <a href="#">Legal & Privacy </a>
+                    <a href="#">Support </a>
+                </div>
+            </div>
+            <div class="col-sm-2 p0">
+                <h2>EXCHANGE</h2>
+                <div class="footer-links">
+                    <a href="#">Buy</a>
+                    <a href="#">Sell</a>
+                    <a href="#">Deposit </a>
+                    <a href="#">Withdraw </a>
+                    <a href="#">Transaction History </a>
+                </div>
+            </div>
+            <div class="col-sm-2 p0">
+                <h2>SOCIAL</h2>
+                <div class="footer-links">
+                    <a href="#">Facebook</a>
+                    <a href="#">Twitter</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">Pinterest</a>
+                    <a href="#">Tumblr </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+{% block jsfile %}
+<!-- jQuery library -->
+<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="{% static 'js/main.js' %}"></script>
+
+
+<!-- extra js-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script src="{% static 'jsx/custom_crypto.js' %}"></script>
+<script src="{% static 'jsx/piechart.js' %}"></script>
+<script src="{% static 'jsx/owl.carousel.js' %}"></script>
+<script src="{% static 'jsx/intlTelInput.js' %}"></script>
+<script src="{% static 'js/intlTelInput.js' %}"></script>
+<script src="{% static 'js/jquery.session.js' %}"></script>
+<script>
+    $(document).ready(function(){
+        $.ajaxSetup({ cache: false }); // or iPhones don't get fresh data
+        // Add smooth scrolling to all links
+        $(".smooth").on('click', function(event) {
+
+            // Make sure this.hash has a value before overriding default behavior
+            if (this.hash !== "") {
+                // Prevent default anchor click behavior
+                event.preventDefault();
+
+                // Store hash
+                var hash = this.hash;
+
+                // Using jQuery's animate() method to add smooth page scroll
+                // The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
+                $('html, body').animate({
+                    scrollTop: $(hash).offset().top
+                }, 800, function(){
+
+                    // Add hash (#) to URL when done scrolling (default click behavior)
+                    window.location.hash = hash;
+                });
+            } // End if
+        });
+    });
+    function onLanguage(sel) {
+        (sel==1?$(".languageform select").val("zh-hans"):$(".languageform select").val("en-us"))
+        $(".languageform")[0].submit()
+    }
+</script>
+{% endblock %}
+{% block script %}
+{% endblock %}
+<div class="scroll-top-wrapper ">
+  <span class="scroll-top-inner">
+    <i class="fa fa-2x fa-arrow-circle-up"></i>
+  </span>
+</div>
+</body>
+</html>

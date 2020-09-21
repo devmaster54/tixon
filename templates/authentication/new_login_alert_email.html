@@ -1,0 +1,13 @@
+{% load i18n %}
+<h4>Hi {{ user.username }},</h4> </br>
+<p>{% trans "It looks like you recently signed into TixonExchange from a new device." %}</p>
+
+<p>{% trans "Device" %} : {{access_obj.os}}</p>
+<p>{% trans "Browser" %} : {{access_obj.device}}</p>
+<p>{% trans "IP" %} : {{access_obj.ip}}</p>
+
+<p>{% trans "Please" %} <a href="{{ contact_us }}"><b>{% trans "contact us" %}</b></a> {% trans "if it was not done by you" %}.</p>
+</br>
+<p>{% trans "Sincerely" %},</p>
+<p>Tixonxchange</p>
+<p>http://tixon.exchange</p>

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Transaction Fees" %}{% endblock %}
+
+{% block extra_styles %}
+      <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+{% endblock %}
+
+
+{% block content %}
+<div class="trans">
+  <div class="container-fluid">
+    <h2 class="Ubuntu mf15 col-sm-8">{% trans "Transaction Fees" %}</h2>
+    <h2 class="col-sm-3"><a href="{% url 'fees:set_transaction_fee' %}" class="btn btn-default">{% trans "Add Transaction Fees" %}</a></h2>
+  </div>
+  <div class="row m0">
+    <div class="col-sm-12">
+      {% for transaction_fee_obj in transaction_fees %}
+      <div class="trans-details">
+        <div class="tab-content">
+          <p><b>{% trans "Currency" %}</b> : {{ transaction_fee_obj.get_currency_display }}</p>
+          <p><b>{% trans "Fee Type" %}</b> : {{ transaction_fee_obj.get_fee_type_display }}</p>
+          <p><b>{% trans "Rate Type" %}</b> : {{ transaction_fee_obj.get_rate_type_display }}</p>
+
+            <table class="table table-striped table-bordered">
+              <tr>
+                <th>{% trans "Limit" %}</th>
+                <th>{% trans "Value" %}</th>
+                <th>{% trans "Fees" %}</th>
+              </tr>
+              {% for range_obj in transaction_fee_obj.transactionfeerange_set.all %}
+                <tr>
+                  <td>{{range_obj.get_limit_display}}</td>
+                  <td>{{range_obj.value}}</td>
+                  <td>{{range_obj.fees}}</td>
+                </tr>
+              {% endfor %}
+            </table>
+            <a id="delete-{{forloop.counter}}" href="javascript:void(0)" class="btn btn-default" onclick="confirm({{transaction_fee_obj.pk}})">{% trans "Delete" %}</a>
+      </div>
+      </div>
+      {% empty %}
+      <div class="trans-details">
+        <div class="tab-content">
+          <h4 align="middle"> {% trans "Nothing found." %}</h4>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+<div id="confirm_modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4>{% trans "Confirm Delete ?" %}</h4>
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+                <button style="width:150px" type="button" class="btn btn-upload" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" onclick="sendConfirm()"  class="btn btn-default" style="width: 200px;margin: 0px 11px;">{% trans "Confirm" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="success_modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <div class="modal-body m50 text-center">
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Success" %}</h3>
+                    &nbsp;
+                    <h6 class="Ubuntu m0">{% trans "Transaction Fee Deleted Successfully" %}</h6>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'fees:transaction_fee_list' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error_modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding: 50px 10px;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+                <h4 class="Ubuntu m0">{% trans "Something went Wrong" %}</h4>
+            </div>
+        </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+<script>
+  var obj_id;
+  function confirm(id){
+    obj_id = id;
+    $('#confirm_modal').modal("show");
+  }
+
+  function sendConfirm(){
+    $('#confirm_modal').modal("hide");
+    url = "/fees/delete-transaction-fee/" + obj_id;
+    $.ajax({
+        type: 'GET',
+        url: url,
+        success: function(result) {
+            if(result.status == 'success'){
+                $("#success_modal").modal("show");
+            }else{
+                $("#error_modal .modal-body h4").html('Something went wrong');
+                $("#error_modal").modal("show");
+            }
+        },
+        error: function(result) {
+            $("#error_modal .modal-body h4").html('Something went wrong');
+            $("#error_modal").modal("show");
+
+        }
+    });
+  }
+</script>
+{% endblock %}

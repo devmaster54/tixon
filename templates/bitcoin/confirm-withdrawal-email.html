@@ -1,0 +1,10 @@
+{% load i18n %}
+<h4>{% trans "Hi" %} {{ pending_transaction.user.username }},</h4> </br>
+<p>{% trans "You are trying to send" %} <b>{{pending_transaction.amount}} {{pending_transaction.currency}}</b> to 
+<b>{{pending_transaction.transaction_to}}</b></b></p>
+<p>{% trans "Please click or copy the link below to confirm withdrawal" %}:
+    <a href="{{ domain }}{{uri}}">{% trans "click here" %}</a></p>
+</br>
+<p>{% trans "Sincerely" %},</p>
+<p>Tixonxchange</p>
+<p>http://tixon.exchange</p>

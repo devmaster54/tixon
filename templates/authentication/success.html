@@ -1,0 +1,40 @@
+{% extends 'base.html' %} {% load static %}
+{% load i18n %}
+{% block title %}{% trans "Verify email id" %}{% endblock %}
+
+{% block content %}
+
+	<div align="center" class="mail-wrapper">
+
+    <div class="container">
+      <div class="row">
+
+        <div class="col-sm-4 col-sm-offset-4 col-xs-6 col-xs-offset-3">
+          <img src="{% static 'img/mail-icon.png' %}" class="mail-icon img-responsive">
+        </div>
+        <div class="clearfix"></div>
+        <h2 class="Ubuntu"><b>{% trans "Please</b> Check Your Email" %}</h2>
+
+        <h4 class="Montserrat col-xs-10 col-xs-offset-1">{% trans "We have sent an email to" %} <span><b>{{email}}</b></span> {% trans "Please click the link inside the email to verify and proceed with your account creation" %}.</h4>
+        <div class="clearfix"></div>
+
+        <hr class="hr-dotted" width="60%">
+
+        <p class="Montserrat"><b>* {% trans "The email take a few minutes to arrive" %}</b></p>
+
+      </div>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+{% block script %}
+  <script src="js/vendor/jquery-1.11.2.min.js"></script>
+  <script>window.jQuery || document.write('<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"><\/script>')</script>
+  <script src="js/vendor/bootstrap.min.js"></script>
+  <script src="js/main.js"></script>
+{% endblock %}
+
+

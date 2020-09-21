@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Dispute Details" %}{% endblock %}
+
+{% block content %}
+
+<style>
+    li.active:hover a{
+        background-color: #f9f9f9 !important;
+        border: #f9f9f9 !important;
+    }
+    .nav-tabs>li{
+        margin-bottom: 0px;
+    }
+</style>
+
+<div class="kyc">
+    <div class="container">
+        <h2 class="Ubuntu mf15">{% trans "Dispute Details" %}</h2>
+        <div class="row m10">
+            {% if messages %}
+                    <div class="alert alert-success" style="position: relative;">
+                      <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                {% for message in messages %}
+                  {{ message }}
+                {% endfor %}
+              </div>
+            {% endif %}
+        </div>
+        <div class="row m0">
+            <div class="col-sm-12">
+                <div class="kyc-details">
+                   <div class="tab-content">
+                        <div class="">
+                            {% for object in dispute_list %}
+                                <div class="row m0 ">
+                                    <div class="col-sm-12 kyc-wrap">
+                                        <div class="col-sm-8">
+                                            <h4 class="m15"> <i class="fa fa-circle fa-0x processing"></i> {{object.user_email}} {{object.user_phonenumber}}</h4>
+                                        </div>
+                                        <div align="center" class="col-sm-4">
+                                            <a href="{% url 'coins:dispute_detail' pk=object.pk %}" class="btn btn-disable"> {% trans "View" %}  </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="row m0 " align="middle">
+                                    <div class="col-sm-12 kyc-wrap">
+                                    {% trans "No Record Found" %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

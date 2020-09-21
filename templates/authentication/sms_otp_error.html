@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{title}}{% endblock %}
+{% load i18n %}
+{% block content %}
+<section class="Sign-wrapper">
+	<div class="container-fluid p0">
+			<div class="text-center" style="margin-top: 15vh;">
+				<h2>{{title}}</h2>
+			</div>
+
+			<section class="ls columns_padding_25 section_padding_top_75 section_padding_bottom_130">
+				<div class="container">
+					<div class="row ">
+                      
+                      <div class="text-center">
+                        
+						<p>
+							{% trans "We tried to send SMS OTP to your registered number, because of some reason SMS provider failed to send OTP to your phone number. please contact the administrator" %}.
+						</p>
+						<a href="{% url 'send_otp' %}" class="Resend text-center"> <span class="glyphicon glyphicon-repeat"></span> {% trans "Resend" %}</a>
+                      </div>
+					</div>
+				</div>
+			</section>
+	</div>
+</section>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

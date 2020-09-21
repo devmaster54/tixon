@@ -1,0 +1,43 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load i18n %}
+{% block title %}{% trans "Report" %}{% endblock %}
+
+{% block content %}
+<div class="trans">
+	<div class="container">
+		<h2 class="Ubuntu mf15">{% trans "Report" %}</h2>
+		<div class="row m0">
+			<div class="col-sm-12">
+				<div class="trans-details">
+					<div class="tab-content">
+						{{form.non_field_errors}}
+						<form method="post" action=".">
+							{% csrf_token %}
+							<div class="form-group">
+								<label class="label-control">{% trans "From:" %}</label>
+								<input type="date" id="fromdate" name="fromdate" class="form-control" required/>
+								{{form.fromdate.errors}}
+							</div>
+							<div class="form-group">
+								<label class="label-control">{% trans "To:"%}</label>
+								<input type="date" id="todate" name="todate" class="form-control" required/>
+								{{form.todate.errors}}
+							</div>
+							<div class="form-group">
+								<button type="submit" class="btn-main btn" >{% trans "Download" %}</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content %}
+
+{% block script %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

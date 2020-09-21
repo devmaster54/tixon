@@ -1,0 +1,146 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Pending Withdrawals" %}{% endblock %}
+
+{% block content %}
+  <div class="trans">
+
+
+
+    <div class="container">
+      <h2 class="Ubuntu mf15">{% trans "Pending Withdrawals" %}</h2>
+        <!-- <div class="mf15 mb20"><h4>{% trans "Main Balance" %} : {% get_account_balance_btc %} BTC</h4> </div> -->
+      <div class="row m0">
+        <div class="col-sm-12">
+         <div class="trans-details">
+
+            <ul class="nav nav-tabs">
+
+              <li class="active "><a data-toggle="tab" href="#home">  <span><i class="far fa-share-square"></i> {% trans "Pending Withdrawals" %}</span> </a></li>
+
+            </ul>
+
+            <div class="tab-content">
+              <div id="home" class="tab-pane fade in active">
+
+              <div class="table-responsive">
+      <table class="table table_template darklinks table-striped table-bordered table-hover" id="timetable">
+        <thead>
+          <tr>
+          	<th>{% trans "User" %}</th>
+          	<th>{% trans "Amount" %}</th>
+            <th>{% trans "Action" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+
+      {% for obj in pending_transactions %}
+			<tr>
+				<td>{{obj.user.username}}</td>
+				<td>
+            <span>{{ obj.amount }}</span><br/>
+        </td>
+				<td>
+            <span><a href="javascript:void(0)" class="btn btn-default" onclick="approveTransaction({{obj.pk}})">{% trans "Approve" %}</a></span>
+            <span><a href="{% url 'coins:reject_pending_transaction' obj.pk %}" class="btn btn-default">{% trans "Reject" %}</a></span>
+        </td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="5"> {% trans "No Transactions" %}</td>
+			</tr>
+			{% endfor %}
+        </tbody>
+      </table>
+    </div>
+              </div>
+              <div id="menu1" class="tab-pane fade">
+              <table class="table table_template darklinks table-striped table-bordered table-hover" id="timetable">
+      </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="successModal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Success" %}</h3>
+                    &nbsp;
+                    <h6 class="Ubuntu m0">{% trans "Transaction Approved" %}.</h6>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'coins:pending_transactions' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-model" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding: 50px 10px;">
+                <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+                <h4 class="Ubuntu m0">{% trans "Something Went Wrong" %}</h4>
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+              <a style="" href="{% url 'coins:pending_transactions' %}" class="btn btn-main">{% trans "OK" %}</a>
+          </div>
+        </div>
+    </div>
+  </div>
+{% endblock content %}
+
+{% block script %}
+<script>
+  function approveTransaction(pk){
+    console.log(pk,"==============")
+    $.ajax({
+        type: 'GET',
+        url: "/crypto/confirm-pending-transaction/"+pk,
+        success: function (data) {
+            console.log(data)
+            if(data['success'] == true){
+                $("#successModal").modal("show");
+            }else if(data['error']){
+                $("#message-model .modal-body h4").html(data['error']);
+                $("#message-model").modal("show");
+            }
+        },
+        error: function(data){
+          console.log(data)
+        }
+    });
+  }
+
+  // function rejectTransaction(pk){
+  //   $.ajax({
+  //       type: 'GET',
+  //       url: "/crypto/reject-pending-transaction/"+pk,
+  //       success: function (data) {
+  //           if(data['success'] == true){
+  //               $("#successModal").modal("show");
+  //               $("#successModal h6").html('Transaction Marked as rejected');
+  //           }else if(data['error']){
+  //               $("#message-model .modal-body h4").html(data['error']);
+  //               $("#message-model").modal("show");
+  //           }
+  //       },
+  //       error: function(data){
+  //         console.log(data)
+  //       }
+  //   });
+  // }
+</script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

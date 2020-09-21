@@ -1,0 +1,846 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load transaction_status %}
+{% load widget_tweaks %}
+{% load i18n %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <style>
+    input[type='number'] {
+      -moz-appearance:textfield;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    #id_price, #id_amount, #id_total {
+        z-index: 0 !important;
+    }
+  </style>
+  <div class="home" id="index-after-login">
+    <div class="container-fluid">
+        <div class="row home-head">
+            <div class="col-sm-9">
+                <div class="row m0">
+                    <div class="col-sm-5">
+                        <h1 class="Ubuntu">
+                            <label>{% trans "Select Crypto:" %} </label>
+                            <select id="cryptopairs" name="pair_list" onChange="changeCrypto()" style="background-color: #1b1c20">
+                                {% for currency in objectcurrency %}
+                                    <option value="{{currency.id}}"
+                                        {% if currency.id == cid %} selected="selected"{% endif %}>
+                                        {{currency.basepair}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </h1>
+                    </div>
+                    <div class="col-sm-5">
+                        <h1 class="Ubuntu">
+                            <label>{% trans "Select Fiat:" %} </label>
+                            <select id="fiatpairs" name="pair_list" onChange="changetoPair()" style="background-color: #1b1c20">
+                                {% if is_otc == 1 %}
+                                    {% for fiat in fiats %}
+                                        <option data-type="fiat" value="{{fiat.id}}"
+                                            {% if fiat.id == fid %} selected="selected"{% endif %}>
+                                            {{fiat.topair}}
+                                        </option>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if is_otc == 0 %}
+                                    {% for currency in objectcurrency %}
+                                    <!-- add:100 for check if it's crypto or fiat -->
+                                        <option data-type="crypto" value="{{currency.id|add:100 }}" 
+                                            {% if currency.id|add:100 == fid %} selected="selected"{% endif %}>
+                                            {{currency.basepair}}
+                                        </option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </h1>
+                    </div>
+                </div>
+                <div class="clearfix"></div>
+                <div class="oder-wrap">
+                    <div class="oder-head">
+                        <h4 class="Ubuntu">{% trans "Sell Orders" %}</h4>
+                        <!-- <button class="btn btn-x"><i class="fas fa-exchange-alt"></i></button> -->
+                        <!-- <p class="pull-right">Total: <b class="ask-sum"><span class="sell-sum-total"></span></b> SGD</p> -->
+                    </div>
+                    <div class="row m0 text-center" style="color: #ff360e;">
+                        <span>{% trans "Please refresh window before you buy to avoid spam." %}</span>
+                    </div>
+                    <div class="oder-inner">
+                        <table class="table table-striped ask-table">
+                            <thead>
+                                <tr>
+                                    <!-- <th>{% trans "Merchant" %}</th> -->
+                                    <th>{% trans "PRICE" %}({{to_pair}})</th>
+                                    <th>{% trans "AMOUNT" %}({{base_pair}})</th>
+                                    <th>{% trans "TOTAL" %}({{to_pair}})</th>
+                                    <th>{% trans "Phonenumber" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="oder-wrap">
+                    <div class="oder-head pb20">
+                        <h4 class="Ubuntu">{% trans "Buy Orders" %}</h4>
+                        <!-- <p class="pull-right">Total: <b class="bid-sum"><span class="buy-sum-total"></span></b> SGD</p> -->
+                    </div>
+                    <div class="oder-inner">
+                        <table class="table table-striped bid-table">
+                            <thead>
+                                <tr>
+                                    <!-- <th>{% trans "Merchant" %}</th> -->
+                                    <th>{% trans "PRICE" %}({{to_pair}})</th>
+                                    <th>{% trans "AMOUNT" %}({{base_pair}})</th>
+                                    <th>{% trans "TOTAL" %}({{to_pair}})</th>
+                                    <th>{% trans "Phonenumber" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="buy-sell">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#limit">{% trans "Limit" %}</a></li>
+                    </ul>
+                        <div id="limit" class="tab-pane fade in active">
+                            <div class="col-sm-12">
+                                <h3 class="Ubuntu">{% trans "Sell" %} {{base_pair}} <span class="pull-right">{{base_pair}} {% trans "Balance:" %} {% get_crypto_balance request.user %} </span> </h3>
+                                <form class="sell-limit-orders" method="post" action="{% url 'coins:stop_limit_order' %}">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <div class="label-wrap">
+                                            <label class=" ">{% trans "Price:" %}</label>
+                                        </div>
+                                        <div class="input">
+                                            <div class="input-group">
+                                                {% render_field exchange_form.price class="form-control change-price" min="0" %}
+                                                <span class="input-group-addon">{{to_pair}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="label-wrap">
+                                            <label class=" ">{% trans "Amount" %}: </label>
+                                        </div>
+                                        <div class="input">
+                                            <div class="input-group">
+                                                {% render_field exchange_form.amount class="form-control change-amount" min="0" %}
+                                                <span class="input-group-addon">{{base_pair}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="label-wrap">
+                                            <label class=" ">{% trans "Total" %}:</label>
+                                        </div>
+                                        <div class="input">
+                                            <div class="input-group">
+                                                {% render_field exchange_form.total class="form-control total-val" readonly='true' min="0" %}
+                                                <span class="input-group-addon">{{to_pair}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button onclick="ordersSell('sell-limit-orders',1)" class="btn btn-block sell-btn" type="button">{% trans "Sell" %} {{base_pair}}</button>
+                                    </div>
+                                    <div class="diaplay-none">
+                                        {% render_field exchange_form.exchange_form value='btc' %}
+                                        {% render_field exchange_form.exchange_to value='sgd' %}
+                                        {% render_field exchange_form.user  %}
+                                        {% render_field exchange_form.limit value='0'  %}
+                                        {% render_field exchange_form.order_type  %}
+                                        {% render_field exchange_form.order_mode  %}
+                                        {% render_field exchange_form.is_otc  %}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div class="oder-wrap  row m0 mb20 mf15 mr15">
+                <div class="oder-head">
+                    <h4 class="Ubuntu">{% trans "Open Orders" %}</h4>
+                </div>
+                <div class="oder-inner">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Pair" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Price" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Total" %}</th>
+                                <th>{% trans "Completed" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if open_orders|length %}
+                                {% for orders in open_orders %}
+                                    <tr>
+                                        <td>{{orders.order_time}}</td>
+                                        <td>{{ orders.exchange_form|upper }}/{{ orders.exchange_to|upper }}</td>
+                                        <td>{% if orders.order_type == "1" %}{% trans "Sell" %}{% else %}{% trans "Buy" %}{% endif %}</td>
+                                        <td>{{orders.price}}</td>
+                                        <td>{{orders.amount}}</td>
+                                        <td>{% total_price orders.price orders.amount %}</td>
+                                            <td>
+                                            <div id="myProgress">
+                                              <div id="myBar" style="width:{% percentage_completed orders.coins_covered orders.amount %}%;color:#000">{% percentage_completed orders.coins_covered orders.amount %}%</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="7" align="center">{% trans "No open orders found" %}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="oder-wrap row m0 mb20 mf15 mr15">
+                <div class="oder-head">
+                    <h4 class="Ubuntu">{% trans "Trade History" %}</h4>
+                </div>
+                <div class="oder-inner">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Pair" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Price" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Total" %}</th>
+                                <th>{% trans "Trigger" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if order_history|length %}
+                            {% for orders in order_history %}
+                            <tr>
+                                <td>{{orders.order.order_time}}</td>
+                                <td>{{orders.order.exchange_form|upper}}/{{orders.order.exchange_to|upper}}</td>
+                                <td>
+                                {% if orders.sender == request.user %}
+                                    {% if orders.order.order_type == "1" %}
+                                        {% trans "Buy" %}
+                                    {% else %}
+                                        {% trans "Sell" %}
+                                    {% endif %}
+                                {% else %}
+                                    {% if orders.order.order_type == "1" %}
+                                        {% trans "Sell" %}
+                                    {% else %}
+                                        {% trans "Buy" %}
+                                    {% endif %}
+                                {% endif %}
+                                </td>
+                                <td>{{orders.order.price}}</td>
+                                <td>{{orders.crypto_amount}}</td>
+                                <td>{% total_price orders.order.price orders.crypto_amount %}</td>
+                                <td>{% if orders.order.limit %}{{ orders.order.limit }}{% else %}-{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="7" align="center">{% trans "No order history records found" %}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="myModal" role="dialog" aria-labelledby="myLargeModalLabel">
+    <input type="hidden" id="submitted_form_class">
+    <div class="modal-dialog ">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <p align="left"><h3 style="color:#3e3e3e"><b>{% trans "Confirm" %}</b></h3></p>
+        </div>
+        <div class="modal-body">
+          <h3 class="pop-h3">{% trans "Are you sure?" %}</h3>
+        </div>
+        <div class="modal-footer">
+            <div align="center">
+                <button type="button" class="btn btn-upload" style="width: 30%;" onclick="call_ajax_form_submit_for_orders()">{% trans "OK" %}</button>
+                <button type="button" class="btn btn-default" style="width: 30%;" data-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+        </div>
+      </div>
+
+    </div>
+</div>
+<div id="acceptorderModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">{% trans "Enter Amount" %}</h4>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'coins:accept_order' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="available-amount" class="col-form-label">{% trans "Available Amount" %}: <span id="available_amount"></span></label>
+            </div>
+            <div class="form-group">
+                <label for="recipient-amount" class="col-form-label">{% trans "Amount" %}:</label>
+                <input type="number" class="" name="amount" data-pk="" data-limit="" id="recipient-amount" step="0.01" value="0.00"><br/>
+                <span class="errorlist">{% trans "Required amount is not acceptable" %}</span>
+            </div>
+            <div class="form-group">
+                <input type="number" name="id" id="order-pk"><br/>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" style="padding: 10px 25px;
+    background-color: #12b907;" onclick="accept_order()" class="btn btn-success">{% trans "Buy" %}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/highstock.js' %}"></script>
+
+<script>
+$(document).ready(function(){
+    $.ajaxSetup({ cache: false }); // or iPhones don't get fresh data
+    setMarketPrice()
+    $('.change-amount, .change-price').on('keyup', function(){
+        container = $(this).parents('form')
+        val = parseFloat(container)
+        container.find('.change-amount').each(function(){
+            sum = parseFloat(container.find('.change-amount').val())* parseFloat(container.find('.change-price').val());  // Or this.innerHTML, this.innerText
+            container.find('.total-val').val(sum.toFixed(3))
+        });
+    })
+
+    {% if sell_order %}
+        drawParseOrderBookDraw({{sell_order|safe}},1)
+    {% endif %}
+
+    {% if buy_order %}
+        drawParseOrderBookDraw({{buy_order|safe}},0)
+    {% endif %}
+
+    coinList("{{ base_pair }}",'');
+
+    $('[data-toggle="tooltip"]').tooltip();
+    $(document).keydown(function(e){
+          //CTRL + V keydown combo
+        if(e.ctrlKey && e.keyCode == 70){
+            e.preventDefault();
+            $('input[name=coin_filter]').focus()
+            topFunction()
+        }
+    })
+
+    setInterval(function(){ ajaxOrderBook() }, 3000);
+
+});
+// pending order
+var pending_order;
+function ajaxOrderBook() {
+    $.ajax({
+        dataType: 'json',
+        url: "{% url 'coins:ajax_order_book' %}",
+        success:function (data) {
+            // console.log(data.json_qs1_order[0].sum_pending_amount)
+            drawOrderBookDraw(data.json_buy_order, 0)
+            drawOrderBookDraw(data.json_sell_order, 1)
+            pending_order = JSON.parse(data.json_pending_order)
+            // console.log(typeof(pending_order),pending_order, "===")
+        }
+    })
+
+}
+
+function topFunction() {
+    document.body.scrollTop = 0; // For Safari
+    document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+}
+
+function setMarketPrice(){
+    $('.buy-limit-orders #id_price, .sell-limit-orders #id_price').val({% btc_price_in_sgd %});
+    $('.buy-market-orders #id_price, .sell-market-orders #id_price').val({% btc_price_in_sgd %});
+}
+
+function formatDate(day, month){
+    if(parseInt(day/10) <= 0)
+      day = '0'+day
+    if(parseInt(month/10) <=0)
+      month = '0'+month
+    return [day, month]
+}
+</script>
+<script>
+function changeCrypto() {
+    if ("{{is_otc}}" == '1') {
+        var cid = $('#cryptopairs').find(":selected").val();
+        var fid = $('#fiatpairs').find(":selected").val();
+        window.location = '/otcdashboard?cp='+cid+'&fp='+fid;
+    } else {
+        var cid = $('#cryptopairs').find(":selected").val();
+        var fid = 103-cid;
+        $('#fiatpairs').val(fid);
+        window.location = '/otcdashboard?cp='+cid+'&fp='+fid;
+    }
+}
+function changetoPair() {
+    if ("{{is_otc}}" == '1') {
+        var fid = $('#fiatpairs').find(":selected").val();
+        var cid = $('#cryptopairs').find(":selected").val();
+        window.location = '/otcdashboard?fp='+fid+'&cp='+cid;
+    } else {
+        var fid = $('#fiatpairs').find(":selected").val();
+        var cid = 103-fid;
+        $('#cryptopairs').val(cid);
+        window.location = '/otcdashboard?cp='+cid+'&fp='+fid;   
+    }
+}
+</script>
+<script>
+
+$('input[name=coin_filter]').on('change keyup', function () {
+    coinList("{{base_pair}}", $(this).val().trim().toLocaleLowerCase())
+})
+</script>
+<script>
+    function coinList(coin, filter){
+
+        $.ajax({
+            dataType: "json",
+            url: "{% url 'api:btcsgd' %}",
+            success: function (data) {
+                $('.my-coin-list').html('');
+                    if(data.short.trim().toLocaleLowerCase().includes(filter) || data.long.trim().toLocaleLowerCase().includes(filter)){
+                        html_data = "<tr id='"+data.short+"'>"
+                        html_data += "<td>"+ data.short +"</td>"
+                        html_data += "<td class='trade-price'>$"+ parseFloat(data.lastPrice).toFixed(4) +"</td>"
+                        html_data += "<td>"+ data.volume24hr+"</td>"
+                        if(parseFloat(data.change24hr)>0)
+                          html_data += "<td class='green'>+"+ data.change24hr +"</td>"
+                        else
+                          html_data += "<td class='red'>"+ data.change24hr +"</td>"
+
+                        html_data += "<td>"+ data.long +"</td></tr>"
+
+                        $('.my-coin-list').append(html_data);
+                    }
+
+                
+            }
+        });
+    }
+
+</script>
+
+<script>
+    /*
+    try{
+        var socket = io.connect('https://coincap.io');
+
+        socket.on('trades', function (tradeMsg) {
+            current_val = $("#"+tradeMsg.coin+" > .trade-price").text();
+
+            html_data = "<td>"+ tradeMsg.message.msg.short +"</td>"
+            html_data += "<td class='trade-price'>$"+ parseFloat(tradeMsg.message.msg.price).toFixed(5) +"</td>"
+            html_data += "<td>"+ tradeMsg.message.msg.volume +"</td>"
+            if(parseFloat(tradeMsg.message.msg.perc)>0)
+              html_data += "<td class='green'>+"+ tradeMsg.message.msg.perc +"</td>"
+            else
+              html_data += "<td class='red'>"+ tradeMsg.message.msg.perc +"</td>"
+            html_data += "<td>"+ tradeMsg.message.msg.long +"</td>"
+
+            $("#"+tradeMsg.coin).html(html_data)
+        })
+    }
+    catch (e) {
+        console.log('hiii')
+    }
+*/
+</script>
+
+
+<script>
+  function ordersBuy(form_class_name,mode){
+      if('{{request.user.id}}' === 'None') {
+        window.location = '/auth/login'
+        return;
+      }
+      $('.'+form_class_name+' #id_user').val('{{request.user.id}}')
+      $('.'+form_class_name+' #id_order_type').val('0')
+      $('.'+form_class_name+' #id_order_mode').val(mode)
+      $('.'+form_class_name+' #id_exchange_form').val("{{to_pair}}")
+      $('.'+form_class_name+' #id_exchange_to').val("{{base_pair}}")
+      var fid = $('#fiatpairs').find(":selected").val();
+      if(fid > 100)
+        $('.'+form_class_name+' #id_is_otc').val(0)
+      else
+        $('.'+form_class_name+' #id_is_otc').val(1)
+      $('.errorlist').remove();
+      if(validate_input_fields(form_class_name)){
+          $('#submitted_form_class').val(form_class_name)
+          $('#myModal').modal('show')
+      }
+
+  }
+
+  function ordersSell(form_class_name, mode){
+      if('{{request.user.id}}' === 'None') {
+        window.location = '/auth/login'
+        return;
+      }
+      $('.'+form_class_name+' #id_user').val('{{request.user.id}}')
+      $('.'+form_class_name+' #id_order_type').val('1')
+      $('.'+form_class_name+' #id_order_mode').val(mode)
+      $('.'+form_class_name+' #id_exchange_form').val('{{base_pair}}')
+      $('.'+form_class_name+' #id_exchange_to').val('{{to_pair}}')
+      var fid = $('#fiatpairs').find(":selected").val();
+      if(fid > 100)
+        $('.'+form_class_name+' #id_is_otc').val(0)
+      else
+        $('.'+form_class_name+' #id_is_otc').val(1)
+      
+      $('.errorlist').remove();
+      if(validate_input_fields(form_class_name)){
+          $('#submitted_form_class').val(form_class_name)
+          $('#myModal').modal('show')
+      }
+  }
+
+  function call_ajax_form_submit_for_orders() {
+      $('#myModal').modal('hide');
+      var form_class_name = $('#submitted_form_class').val()
+      frm = $('.'+form_class_name);
+      setTimeout(callAjax(frm),5000)
+
+  }
+
+  function validate_input_fields(form_class_name) {
+      var price = $('.'+form_class_name+' input[name="price"]').val();
+      var amount = $('.'+form_class_name+' input[name="amount"]').val();
+      var total = $('.'+form_class_name+' input[name="total"]').val();
+      flag = true
+      if(price == ""){
+        $('.'+form_class_name+' input[name="price"]').parent().after('<span class="errorlist">This field is required</span>');
+        flag = false
+      }
+      else{
+          price_val = parseFloat(price)
+          if(price_val<=0){
+            $('.'+form_class_name+' input[name="price"]').parent().after('<span class="errorlist">Price can\'t be zero or less </span>');
+            flag = false
+          }
+      }
+      if(amount == ""){
+        $('.'+form_class_name+' input[name="amount"]').parent().after('<span class="errorlist">This field is required</span>');
+        flag = false
+      }
+      else{
+          amount_val = parseFloat(amount)
+          if(amount_val<=0){
+            $('.'+form_class_name+' input[name="amount"]').parent().after('<span class="errorlist">Amount can\'t be zero or less </span>');
+            flag = false
+          }
+      }
+      if(total == ""){
+        $('.'+form_class_name+' input[name="total"]').parent().after('<span class="errorlist">This field is required</span>');
+        flag = false
+      }
+      return flag;
+  }
+
+  function callAjax(form){
+
+      $.ajax({
+          type: frm.attr('method'),
+          dataType:'json',
+          url: frm.attr('action'),
+          data: frm.serialize(),
+          async: false,
+          success: function (data) {
+              if(!data.status){
+                alert(data.error)
+                }
+              else {
+                drawOrderBookDraw(data.data, frm.find('#id_order_type').val())
+                alert(data.message)
+                }
+              frm[0].reset();
+              setMarketPrice()
+          },
+          error: function(data) {
+              alert('Error........')
+          }
+      });
+  }
+  function drawParseOrderBookDraw(data,type){
+      if(data){
+        html_data = ''
+        DepthTotal = 0
+        if("{{is_otc}}" == '1'){
+            orders = data.filter(function(od) {
+                return ((od.fields.exchange_form=="{{base_pair}}")||(od.fields.exchange_form=="{{to_pair}}"))&&((od.fields.exchange_to=="{{base_pair}}")||(od.fields.exchange_to=="{{to_pair}}"))&&(od.fields.amount-od.fields.coins_covered>0.00001)
+            })
+        } else {
+            orders = data.filter(function(od) {
+                if(od.fields.order_type == 1) {
+                    return (od.fields.exchange_form=="{{base_pair}}")&&(od.fields.exchange_to=="{{to_pair}}")&&(od.fields.amount-od.fields.coins_covered>0.00001)
+                } else {
+                    return (od.fields.exchange_form=="{{to_pair}}")&&(od.fields.exchange_to=="{{base_pair}}")&&(od.fields.amount-od.fields.coins_covered>0.00001)
+                }
+            })
+        }
+        {% if contacts %}
+            var contacts = {{ contacts|safe }};
+        {% endif %}
+        {% if pending_orders %}
+            pending_order = {{ pending_orders|safe }};
+        {% endif %}
+        
+        // console.log(merchants, "-----------");
+        for(i=0;i<orders.length;i++){
+            if(pending_order.length > 0) {
+                var filteredObj = pending_order.find(function(item, j){
+                    return (item.order_id == orders[i].pk)
+                });
+                if (filteredObj) {
+                    var amount = (parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered) -parseFloat(filteredObj.sum_pending_amount))
+                    html_data += "<tr onclick=tradePopup("+orders[i].pk+","+type+","+(amount>0?amount:0)+",\""+orders[i].fields.exchange_form+"\",\""+orders[i].fields.exchange_to+"\","+orders[i].fields.user+","+orders[i].fields.price+","+orders[i].fields.is_otc+") ><td>"+parseFloat(orders[i].fields.price)+"</td>"
+                    html_data += "<td>"+(amount>0?amount:0)+"</td>"
+                    price_in_sgd = parseFloat((orders[i].fields.price)*(amount>0?amount:0)).toFixed(4)
+                    html_data += "<td>"+price_in_sgd+"</td>"
+                    {% if contacts %}
+                        html_data += "<td>"+contacts.find(x=>x.pk == orders[i].fields.user).fields.phone_number+"</td>"
+                    {% else %}
+                        html_data += "<td>-</td>"
+                    {% endif %}
+                    DepthTotal = parseFloat(DepthTotal) + parseFloat(price_in_sgd);
+                } else {
+                    html_data += "<tr onclick=tradePopup("+orders[i].pk+","+type+","+(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))+",\""+orders[i].fields.exchange_form+"\",\""+orders[i].fields.exchange_to+"\","+orders[i].fields.user+","+orders[i].fields.price+","+orders[i].fields.is_otc+") ><td>"+parseFloat(orders[i].fields.price)+"</td>"
+                    html_data += "<td>"+(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))+"</td>"
+                    price_in_sgd = parseFloat((orders[i].fields.price)*(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))).toFixed(4)
+                    html_data += "<td>"+price_in_sgd+"</td>"
+                    {% if contacts %}
+                        html_data += "<td>"+contacts.find(x=>x.pk == orders[i].fields.user).fields.phone_number+"</td>"
+                    {% else %}
+                        html_data += "<td>-</td>"
+                    {% endif %}
+                    DepthTotal = parseFloat(DepthTotal) + parseFloat(price_in_sgd);
+                }
+            }
+            else {
+                html_data += "<tr onclick=tradePopup("+orders[i].pk+","+type+","+(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))+",\""+orders[i].fields.exchange_form+"\",\""+orders[i].fields.exchange_to+"\","+orders[i].fields.user+","+orders[i].fields.price+","+orders[i].fields.is_otc+") ><td>"+parseFloat(orders[i].fields.price)+"</td>"
+                html_data += "<td>"+(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))+"</td>"
+                price_in_sgd = parseFloat((orders[i].fields.price)*(parseFloat(orders[i].fields.amount)-parseFloat(orders[i].fields.coins_covered))).toFixed(4)
+                html_data += "<td>"+price_in_sgd+"</td>"
+                {% if contacts %}
+                    html_data += "<td>"+contacts.find(x=>x.pk == orders[i].fields.user).fields.phone_number+"</td>"
+                {% else %}
+                    html_data += "<td>-</td>"
+                {% endif %}
+                DepthTotal = parseFloat(DepthTotal) + parseFloat(price_in_sgd);
+            }
+          
+          if(type == '1')
+            $('.ask-table > tbody').html(html_data)
+          else
+            $('.bid-table > tbody').html(html_data)
+        }
+      }
+
+  }
+
+  function drawOrderBookDraw(data, type){
+    // console.log(data,"==========this is data==================== {{base_pair}} , {{to_pair}}");
+      if(data){
+        data = JSON.parse(data)
+        drawParseOrderBookDraw(data, type)
+      }
+
+  }
+
+  function tradePopup(pk, type, amount, exchange_form, exchange_to, order_holder, price, is_otc) {
+    $("#order-pk").val(pk)
+    $("#order-pk").hide()
+    is_otc==1?$("#recipient-amount").data('limit', amount):$("#recipient-amount").data('limit', price*amount)
+    $("#acceptorderModal .errorlist").hide()
+    $("#recipient-amount").val("0.00")
+    if(type == 1) {    
+        $("#acceptorderModal .btn-success").html("BUY")
+    } else {
+        $("#acceptorderModal .btn-success").html("SELL")
+    }
+    request_pk = pk
+    request_order_type = type
+    request_price = price
+    request_exchange_from = exchange_form
+    request_exchange_to = exchange_to
+    request_order_holder = order_holder
+    request_is_otc = is_otc
+    is_otc==1?available_balance = parseFloat('{% get_crypto_balance request.user %}'):available_balance = parseFloat('{% get_crypto_balance_new request.user %}')
+    $("#acceptorderModal #available_amount").html(available_balance)
+    $("#acceptorderModal").modal()
+  }
+
+  function accept_order() {
+      // body...
+      var amount = parseFloat($("#recipient-amount").val())
+      limit = $("#recipient-amount").data('limit')
+      request_is_otc==1?available_balance = parseFloat('{% get_crypto_balance request.user %}'):available_balance=parseFloat('{% get_crypto_balance_new request.user %}')
+      if(amount == 0) {
+        $("#acceptorderModal .errorlist").show()
+      }else {
+        if($("#acceptorderModal .btn-success").html()=="BUY") {
+            if(request_is_otc == 1) {
+                if(amount > limit) {
+                    $("#acceptorderModal .errorlist").show()
+                } else {
+                    $("#acceptorderModal .errorlist").hide()
+                    $( "#acceptorderModal form" )[0].submit()
+                }
+            } else {
+                if(amount > limit || amount > available_balance) {
+                    $("#acceptorderModal .errorlist").show()
+                }else {
+                    $("#acceptorderModal .errorlist").hide()
+                    var csrftoken = getCookie('csrftoken')
+                    var data = {
+                        'amount': parseFloat(amount/request_price),
+                        'order': request_pk,
+                        'is_otc': request_is_otc,
+                        'user': parseInt('{{ request.user.id }}')  
+                    }
+                    $.ajax({
+                        url: "{% url 'coins:confirm_request_pendings' %}",
+                        type: 'POST',
+                        headers:{
+                            "X-CSRFToken": csrftoken
+                        },
+                        data: data,
+                        cache: true,
+                        success: function(data) {
+                            if(!data.status){
+                                console.log(data.error)
+                                alert(data.error)
+                            }
+                            else {
+                              $("#acceptorderModal").modal('hide');
+                            }
+                        }
+                    });
+                }
+            }
+        } else {
+            // if(request_is_otc == 1) {
+            //     if(amount > limit) {
+            //         $("#acceptorderModal .errorlist").show()
+            //     } else {
+            //         $("#acceptorderModal .errorlist").hide()
+            //         $( "#acceptorderModal form" )[0].submit()
+            //     }
+            // } else {
+                if(amount > limit || amount > available_balance) {
+                $("#acceptorderModal .errorlist").show()
+                } else {
+                    $("#acceptorderModal .errorlist").hide()
+                    var csrftoken = getCookie('csrftoken');
+                    if(request_is_otc == 1) {
+                        var data = {
+                            'amount': amount*request_price,
+                            'crypto_amount': amount,
+                            'fiat_type': request_exchange_from,
+                            'crypto_type': request_exchange_to,
+                            'sender': parseInt('{{ request.user.id }}'),
+                            'receiver': request_order_holder,
+                            'order': request_pk,
+                            'is_otc': request_is_otc
+                        };
+                    } else {
+                        var data = {
+                            'amount': parseFloat(amount/request_price),
+                            'order': request_pk,
+                            'is_otc': request_is_otc,
+                            'user': parseInt('{{ request.user.id }}')
+                        };
+                    }
+                    $.ajax({
+                        url: "{% url 'coins:confirm_request_pendings' %}",
+                        type: 'POST',
+                        headers:{
+                            "X-CSRFToken": csrftoken
+                        },
+                        data: data,
+                        cache: true,
+                        success: function(data) {
+                            if(!data.status){
+                                console.log(data.error)
+                                alert(data.error)
+                            }
+                            else {
+                              $("#acceptorderModal").modal('hide');
+                            }
+                        }
+                    });
+                // }
+            }
+            
+        }
+      }
+
+  }
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+          var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+         var cookie = jQuery.trim(cookies[i]);
+    // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) == (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+         }
+      }
+    }
+     return cookieValue;
+  }
+
+</script>
+{% endblock %}

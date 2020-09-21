@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Dispute" %}{% endblock %}
+
+{% block content %}
+<div class="profile">
+    <div class="container">
+        <div class="row m0">
+            {% if not request.user.is_superuser %}
+            <div class="col-sm-8">
+                <div class="profile-top">
+                    <h4 class="m40"><b>{% trans "Your Dispute status" %}</b></h4>
+                    {% if disputeDetail.dispute_status == 'approved' %}
+                        <button class="btn-main btn m20 "> <i class="fas fa-check" style="color: #0fd800;"></i> {% trans "Approved" %}</button>
+                    {% elif disputeDetail.dispute_status == 'rejected' %}
+                        <button class="btn-main btn m20 "> <i class="fas fa-close" style="color: red;"></i> {% trans "Rejected" %}</button>
+                    {% elif disputeDetail.dispute_status == 'processing' %}
+                        <button class="btn-main btn m20 "> <i class="fas fa-sync" style="color: #f3bc18;"></i> {% trans "Processing" %}</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <div class="col-sm-12">
+                <div class="profile-bottom">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#home">{% trans "Dispute details" %}</a></li>
+                        <li><a data-toggle="tab" href="#menu1">{% trans "Documents" %}</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div id="home" class="tab-pane fade in active">
+                            <div class="row m0">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "User Name" %}</label>
+                                        <h3 class="m0">{{user_profile.full_name}}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "User Phone Number" %}</label>
+                                        <h3 class="m0">{{user.phone_number}}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "User Email" %}</label>
+                                        <h3 class="m0">{{user.email}}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if not client_invalid %}
+                                <div class="row m0">
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="grey">{% trans "Client Name" %}</label>
+                                            <h3 class="m0">{{client_profile.full_name}}</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="grey">{% trans "Client Email" %}</label>
+                                            <h3 class="m0">{{client.email}}</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="grey">{% trans "Client Phonenumber" %}</label>
+                                            <h3 class="m0">{{disputeDetail.client_phonenumber}}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            {% if client_invalid %}
+                                <div class="row m0">
+                                    <br/>
+                                    <div class="col-sm-6">
+                                            <h3 class="m0" style="color: red">{% trans "Provided Client PhoneNumber is invalid" %}</h3>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="row m0">
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <label class="grey">{% trans "Description" %}</label>
+                                        <h3 class="m0">{{disputeDetail.description}}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="menu1" class="tab-pane fade">
+                            <div class="row m0">
+                                <h2 class="Ubuntu mf15">{% trans "Photo" %}</h2>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <img src="{{disputeDetail.front_page.url}}" width="100%">
+                                    </div>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:right; padding:20px;">
+                    {% if request.user.is_superuser %}
+                        <a href="{% url 'coins:list_dispute' %}" style="width:200px;margin-right:15px;" class="btn btn-success">{% trans "Back To Dispute List" %}</a>
+                        {% if user.kyc_verified == 'processing' %}
+                            <a href="{% url 'coins:dispute_approve' pk=disputeDetail.pk %}" style="width:200px" class="btn btn-primary">{% trans "Approve" %}</a>
+                        {% endif %}
+
+                        {% if not user.kyc_verified == 'rejected' %}
+                        <a href="{% url 'coins:dispute_reject' pk=disputeDetail.pk %}" style="width:200px" class="btn btn-danger">{% trans "Reject" %}</a>
+                        {% endif %}
+                        
+                    {% else %}
+                        <a href="{% url 'coins:my_list_dispute' %}" style="width:200px;margin-right:15px;" class="btn btn-success">{% trans "Back To Dispute List" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+  <script>
+    $('#home,#tag').on('hover focus',function(){
+        alert();
+    })
+  </script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load i18n %}
+{% block title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="">
+          <div class="inner">
+            <div class="login">  
+              <div class="container">
+               <h2 class="Ubuntu"><b>{% trans "Login" %}</b> {% trans "to Your Account" %}</h2>
+               {% if verification %}
+                <h4 class="Montserrat">{% trans "Thank you for validating your account, please login to" %}<br> {% trans "your account" %}</h4>
+               {% endif %}
+               <div id="form-error" style="color: red;" class="col-sm-8 col-sm-offset-2">{{ form.non_field_errors }}</div>
+               <form action="./" method="post" novalidate="">
+                    {% csrf_token %}
+                   <div class="form-group col-sm-8 col-sm-offset-2" align="left">
+                     <label class="Montserrat">{% trans "Email" %}</label> 
+                     {% trans "Enter your mail" as ph2 %}
+                     {% render_field form.username class="form-control Montserrat" placeholder=ph2 autocomplete="off" %}
+                     <div class="errorlist">{{ form.username.errors|striptags }}</div>
+                   </div>
+                   <div class="form-group col-sm-8 col-sm-offset-2" align="left">
+                     <label class="Montserrat">{% trans "Password" %} </label> 
+                     <div class="input-group">
+                      {% trans "Enter your password" as ph1 %}
+                      {% render_field form.password  class="form-control password-input" placeholder=ph1  name="search" id="id_password1" autocomplete="off" %}
+                      <div class="input-group-btn">
+                        <button class="btn-show btn" type="button"><i class="fa fa-eye" id="password_visibility"></i></button>
+                      </div>
+                    </div>
+                    <div class="errorlist">{{ form.password.errors|striptags }}</div>
+                    <label class="check d-inline-block">
+                      <!-- <input name="remember_me" type="checkbox">
+                      <span class="checkmark"> </span> Remember Me -->
+                    </label>
+                       <div class="pull-right"><p class="m20"> <a class="a-forget" href="{% url 'password_reset' %}"> {% trans "Forgot password" %}&#63;</a></p> </div>
+                    <hr class="hr-dotted">
+                    <div align="center">
+                      <button class="btn-main btn Montserrat"> {% trans "Login" %} </button>
+                    </div>
+
+                  </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock %}
+
+
+{% block footer %}
+    <div class="clearfix"></div>
+{% endblock %}
+                  
+                  
+                   

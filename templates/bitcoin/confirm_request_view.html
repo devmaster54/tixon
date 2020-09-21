@@ -1,0 +1,148 @@
+{% extends 'base.html' %}  
+{% load static %}
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Confirm Orders" %}{% endblock %}
+
+{% block content %}
+<div class="trans">
+  <div class="container">
+    <h2 class="Ubuntu mf15">{% trans "Pending Orders" %}</h2>
+     <hr style="border-top: 1px solid #ff360e;">
+    <div class="row m0">
+      <div class="col-sm-12">
+       <div class="trans-details">
+        <div class="tab-content">
+          <div class="row m0 ">
+            <div class="col-sm-12 kyc-wrap request-orders">
+              {% if request_crypto_txs %}
+                {% for crypto_tx in request_crypto_txs %}
+                  <div class="row" id="order-{{crypto_tx.id}}">
+                    <div class="col-sm-8">
+                        <h4 class="m15"> <i class="fa fa-circle fa-0x processing"></i> {% trans "Pay" %} {{crypto_tx.amount}} {{crypto_tx.fiat_type}} {% trans "to" %} {{crypto_tx.sender.username}} {% trans "for" %} {{crypto_tx.crypto_amount}} {{crypto_tx.crypto_type}}</h4>
+                    </div>
+                    <div align="center" class="col-sm-4">
+                        <a onclick="approvePayment({{crypto_tx.order_id}}, {{crypto_tx.crypto_amount}}, {{crypto_tx.sender.id}})" class="btn btn-disable"> {% trans "Approve" %} </a>
+                        <a onclick="cancelPayment({{crypto_tx.id}})" class="btn btn-disable"> {% trans "Cancel" %} </a>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="row" align="center">
+                  <h4>{% trans "No Pending Request" %}</h4>
+                </div>
+              {% endif %}
+
+            </div>
+          </div>
+        </div>
+      </div><br/>
+     </div>
+    </div>
+  </div>
+</div>
+
+ <div id="success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body m50 text-center">
+                <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                <h3 class="Ubuntu">{% trans "Success" %}</h3>
+                &nbsp;
+                <!-- <h6 class="Ubuntu m0">Order cancelled</h6>
+                &nbsp; -->
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+                <a style="" data-dismiss="modal" class="btn btn-main">{% trans "OK" %}</a>
+            </div>
+        </div>
+    </div>
+    <form method="post" action="{% url 'coins:accept_order' %}" id="accept_form">
+      {% csrf_token %}
+      <div class="form-group">
+          <input type="number" name="id" id="order-pk"><br/>
+          <input type="number" class="" name="amount" id="amount"><br/>
+          <input type="text" class="" name="sender" id="email"><br/>
+      </div>
+    </form>
+</div>
+
+<div id="confirm-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+  <div class="modal-dialog modal-xs">
+      <div class="modal-content">
+          <div class="modal-body" style="padding: 50px 10px">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <img class="m30" src="{% static 'img/important.png' %}" width="40%">
+              <h4 class="Ubuntu m0">{% trans "Are you sure to send fiat?" %}</h4>
+          </div>
+          <div class="pop-footer" style="text-align: center;">
+              <a style="" href="javascript:void(0)" onclick="confirmFiat()" class="btn btn-main">{% trans "Yes" %}</a>
+              <a style="" href="javascript:void(0)" data-dismiss="modal" class="btn btn-main">{% trans "No" %}</a>
+          </div>
+      </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block script %}
+<script>
+  function approvePayment(confirm_id, amount, sender_id) {
+    $('#confirm-modal').modal('show')
+    id = confirm_id
+    crypto_amount = amount
+    sender = sender_id
+  }
+
+  function cancelPayment(id) {
+    var csrftoken = getCookie('csrftoken');
+    var data = {
+      'id': id
+    };
+    $.ajax({
+        url: "{% url 'coins:cancel_requestcrypto_order' %}",
+        type: 'POST',
+        headers:{
+            "X-CSRFToken": csrftoken
+        },
+        data: data,
+        cache: true,
+        success: function(data) {
+          // $(".request-orders .row")
+          $("#order-"+id).fadeOut(200, function() { 
+            $(this).remove();
+            if($(".request-orders .row").length == 0) {
+              $(".request-orders").html('<div class="row" align="center"><h4>{% trans "No Pending Request" %}</h4></div>');
+            }
+          });
+        }
+    });
+  }
+
+  function confirmFiat() {
+    $("#accept_form #order-pk").val(id)
+    $("#accept_form #amount").val(crypto_amount)
+    $("#accept_form #email").val(sender)
+    $("#accept_form")[0].submit()
+  }
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+          var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+         var cookie = jQuery.trim(cookies[i]);
+    // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) == (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+         }
+      }
+    }
+     return cookieValue;
+  }
+</script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

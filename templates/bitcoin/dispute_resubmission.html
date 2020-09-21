@@ -1,0 +1,45 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load transaction_status %} 
+{% load i18n %}
+{% block title %}{% trans "Resubmit Dispute Details" %}{% endblock title %}
+
+{% block content %}
+    <div class="send-coin ">
+        <div class="container">
+            <h2 class="Ubuntu mb20">{% trans "Resubmit Dispute Details" %}</h2>
+            <div class="row mb50 send-coin-wrap">
+                <div class="row m0">
+                    <h4 class="m30"> <b>{% trans "Dispute Details" %}</b> </h4>
+                    <div class="row m0 wallet-details">
+                        <div class="col-sm-6">
+                            <p class="m10 f-medium" ><b>{% trans "User Name" %}:</b>  {{user_profile.full_name}}</p>
+                            <p class="m10 f-medium" ><b>{% trans "User Phonenumber" %}:</b> {{user.phone_number}}</p>
+                        </div>
+                    </div>
+                    <div class="">
+                        <h4 class="m30"><b>{% trans "FeedBack" %}</b></h4>
+                        <form method="post" action="." >
+                            {% csrf_token %}
+                            <div class="form-group">
+                                 <textarea name="feedback" placeholder="{% trans "Enter Feedback" %}" class="form-control" rows="10" cols="30" style="resize: none;" required></textarea>
+                                 <div class="errorlist">{{feedback_error}}</div>
+                            </div>
+
+                            <div align="right">
+                                <a href="{% url 'coins:list_dispute' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> {% trans "BACK TO Disput List" %}</a>
+                                <button type="submit" id="submit_amount" class="btn-main btn m20" >  {% trans "CONFIRM Resubmit" %} </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+{% endblock script %}

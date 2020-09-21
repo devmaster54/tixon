@@ -1,0 +1,40 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Transaction Status" %}{% endblock %}
+
+{% block content %}
+  <div class="verify">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-4 col-sm-offset-4 col-xs-6 col-xs-offset-3">
+          &nbsp;
+        </div>
+        <div class="clearfix"></div>
+        <h2 class="Ubuntu">
+          {% if message %}
+            {{message}}
+          {% elif success %}
+            {% trans "Transaction Successfull" %}.
+          {% elif error %}
+            {{error}}
+          {% else %}
+            {% trans "Transaction Failed" %}.
+          {% endif %}
+        </h2>
+        <div align="center" class="col-6 offset-3 d-flex  justify-content-around mt-3">
+          <a href="{% url 'welcome' %}" class="btn btn-success">{% trans "Go to Dashboard" %}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+{% block script %}
+  <script src="js/vendor/jquery-1.11.2.min.js"></script>
+  <script>window.jQuery || document.write('<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"><\/script>')</script>
+  <script src="js/vendor/bootstrap.min.js"></script>
+  <script src="js/main.js"></script>
+{% endblock %}

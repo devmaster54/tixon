@@ -1,0 +1,101 @@
+{% extends 'base.html' %} {% load static %}
+{% load i18n %}
+{% block title %}{% trans "Disable Google Authentication" %}{% endblock %}
+
+{% block content %}
+	<div class="disable-sms">
+		<div class="container">
+			<h2 class="Ubuntu">{% trans "Disable Google Authentication" %}</h2>   
+			<div class="row">
+				<div class="col-sm-10 col-sm-offset-1">
+					<form id="form" method="post" action=".">
+						{% csrf_token %}
+						<div class="row disable-top">
+							<div class="col-sm-4">
+								<label class="m40 d-block hidden-xs">{% trans "Your Login Password" %}</label>
+								<label class="m50 d-block hidden-xs">{% trans "Authentication Code" %}</label>
+							</div>
+							<div class="col-sm-8">
+								<input type="password" name="password" class="form-control m20" placeholder="{% trans "Your Login Password" %}" required="" onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;">
+								<input type="text" name="authentication_code" class="form-control m20" placeholder="{% trans "Authentication Code" %}" required="">
+							</div>
+							<div class="clearfix"></div>
+						</div> 
+						<div align="right" class="row disable-bottom">
+							<button class="btn btn-main" type="submit">{% trans "Disable" %}</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="success-model" style="background: #0b0b0bcc;" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal"><img src="{% static 'img/close.png' %}"> 	</button>
+        <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+
+        <h3 class="Ubuntu">{% trans "2 Step Authentication has been" %} </h3>
+        <h3 class="Ubuntu m0" style="color: #48e543;">{% trans "successfully Disable" %}</h3>
+
+        <div class="secounds Ubuntu "> {% trans "Redirecting to settings page in" %} <span class="counter-count"></span>{% trans "seconds" %}... </div>
+
+        <div class="pop-footer">
+
+          <a href="{% url 'coins:settings' %}" class="btn btn-main"> {% trans "OK" %}</a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="failure-model" style="background: #0b0b0bcc;" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+
+        <p class="Ubuntu"><b>{% trans "Incorrect Login Password or Authentication Code, Please try again." %}</b></p>
+        <br>
+      </div>
+    </div>
+  </div>
+</div>
+
+	<script src="{% static 'jsx/vendor/jquery-3.1.0.min.js' %}"></script>
+	<script>
+		$('#form').submit(function(event){
+			event.preventDefault();
+			$.ajax({
+				url: "{% url 'desable_2fa' %}",
+				method: "POST",
+				data: $('#form').serialize(),
+				success: function(data){
+					if(data.status){
+						$('#success-model').modal('show');
+					var counter = 5;
+					var interval = setInterval(function() {
+						counter--;
+						$('.counter-count').text(counter)
+						// Display 'counter' wherever you want to display it.
+						if (counter == 0) {
+							// Display a login box
+							window.location.href = "{% url 'coins:settings' %}"
+							clearInterval(interval);
+						}
+					}, 1000);
+					}else{
+						 $('#failure-model').modal('show');
+					}
+				}
+
+			});
+		});
+	</script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

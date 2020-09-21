@@ -1,0 +1,73 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load transaction_status %} 
+{% load i18n %}
+{% block title %}{% trans "Reject transaction" %}{% endblock title %}
+
+{% block content %}
+    <div class="send-coin ">
+        <div class="container">
+            <h2 class="Ubuntu mb20">{% trans "Reject transaction" %}</h2>
+            <div class="row mb50 send-coin-wrap">
+                <div class="row m0">
+                    <h4 class="m30"> <b>{% trans "Transaction Details" %}</b> </h4>
+                    <div class="row m0 wallet-details">
+                        <div class="col-sm-6">
+                            <img class="d-inline-block" src="{% static 'img/bitcoin.png' %}" width="40px">
+                            <p class="d-inline-block mf10"><b>BTC</b></p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="m10 f-medium" ><b>{% trans "Amount" %}:</b> {{transaction.amount}} BTC</p>
+                            <p class="m10 f-medium" ><b>{% trans "User Email" %}:</b> {{transaction.user.email}}</p>
+                            <p class="m10 f-medium" ><b>{% trans "To Address" %}:</b> {{transaction.transaction_to}}</p>
+                        </div>
+                    </div>
+                    <div class="">
+                        <h4 class="m30"><b>{% trans "FeedBack" %}</b></h4>
+                        <form method="post" action="." >
+                            {% csrf_token %}
+                            <div class="form-group">
+                                 <textarea name="feedback" placeholder="{% trans "Enter Feedback" %}" class="form-control" rows="10" cols="30" style="resize: none;" required></textarea>
+                                 <div class="errorlist">{{feedback_error}}</div>
+                            </div>
+
+                            <div align="right">
+                                <a href="{% url 'welcome' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> {% trans "BACK TO DASHBOARD" %}</a>
+                                <button type="submit" id="submit_amount" class="btn-main btn m20" >  {% trans "CONFIRM REJECT" %} </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if success %}
+    <div id="success_modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body m50 text-center">
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Success" %}</h3>
+                    &nbsp;
+                    <h6 class="Ubuntu m0">{% trans "Transacton successfully cancelled" %}</h6>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'coins:pending_transactions' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+<script>
+    {% if success %}
+        $('#success_modal').modal('show');
+    {% endif %}
+</script>
+{% endblock script %}

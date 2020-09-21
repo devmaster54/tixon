@@ -1,0 +1,142 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% load transaction_status %}
+{% load widget_tweaks %}
+{% load i18n %}
+{% block title %}{% trans "Add Transaction Fees" %}{% endblock title %}
+
+{% block content %}
+    <div class="send-coin ">
+        <div class="container">
+            <h2 class="Ubuntu mb20">{% trans "Add Transaction Fees" %}</h2>
+            <div class="row send-coin-wrap">
+                <div class="row">
+                    <form class="form-horizontal" id="transaction-form">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group">
+                                <label class="control-label col-sm-2"><b>{% trans "Type" %} :</b></label>
+                                <div class="col-sm-8">
+                                    {% render_field field class="form-control" %}
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <h4 class="col-sm-offset-1 col-sm-10"><b>{% trans "Transaction Fees Range" %}</b></h4>
+
+                        {{ formset.management_form }}
+                        <div class="col-sm-offset-1 col-sm-10">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                  <tr>
+                                    <th>{% trans "Limit" %}</th>
+                                    <th>{% trans "Value" %}</th>
+                                    <th>{% trans "Fees" %}</th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                    {% for form in formset %}
+                                    <tr class="link-formset">
+                                        <td>{{ form.id }} {% render_field form.limit class="form-control" %}</td>
+                                        <td>{% render_field form.value class="form-control" value="" %}</td>
+                                        <td>{% render_field form.fees class="form-control" value="" %}</td>
+                                        <td></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="button" id="submit" class="btn-main btn" >  {% trans "CONFIRM" %} </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="success_modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body m50 text-center">
+                    <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Success" %}</h3>
+                    &nbsp;
+                    <h6 class="Ubuntu m0">{% trans "Transaction Fee Added Successfully" %}</h6>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'fees:transaction_fee_list' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error_modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding: 50px 10px;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+                <h4 class="Ubuntu m0">{% trans "Please ensure that the input field have value" %}.</h4>
+            </div>
+        </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/jquery.formset.js' %}"></script>
+<script>
+    $('.link-formset').formset({
+        prefix: '{{ formset.prefix }}',
+        addText: 'add range',
+        deleteText: 'remove',
+        formCssClass: 'dynamic-formset1'
+    });
+</script>
+
+<script>
+    $('#submit').click(function () {
+        not_selected = $("#transaction-form").find('option:checked[value=""]').length;
+        $("#transaction-form input[type=text]").each(function(){
+             if($(this).val()==""){
+                empty_input = true;
+             }else{
+                empty_input = false;
+             }
+        });
+        if (not_selected == 0 && empty_input == false) {
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'fees:set_transaction_fee' %}",
+                data: $("#transaction-form").serialize(),
+                success: function(result) {
+                    if(result.status=='success'){
+                        $("#success_modal").modal("show");
+                    }else{
+                        console.log(result.status)
+                        $("#error_modal .modal-body h4").html(result.status);
+                        $("#error_modal").modal("show");
+                    }
+                },
+                error: function(result) {
+                    $("#error_modal .modal-body h4").html('Something went wrong');
+                    $("#error_modal").modal("show");
+
+                }
+            });
+        }
+        else {
+            $("#error_modal .modal-body h4").html('Please ensure that the input field have value');
+            $("#error_modal").modal("show")
+        }
+    });
+</script> 
+{% endblock script %}

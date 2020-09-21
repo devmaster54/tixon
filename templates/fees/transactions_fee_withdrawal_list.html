@@ -1,0 +1,154 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Transaction Fee History" %}{% endblock %}
+
+{% block extra_styles %}
+      <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+{% endblock %}
+
+
+{% block content %}
+<div class="trans">
+  <div class="container-fluid">
+    <h2 class="Ubuntu mf15">{% trans "Transaction Fee History" %}</h2>
+    <h5 class="Ubuntu mf15">{% trans "Collected Transacton Fee Balance" %}: {% fee_balance %}</h5>
+  </div>
+  <div class="row m0">
+    <div class="col-sm-12">
+     <div class="trans-details">
+      <ul class="nav nav-tabs">
+        <li class="active "><a data-toggle="tab" href="#home">  <span><i class="far fa-arrow-alt-circle-down"></i> {% trans "Transaction Fee Received" %} </span> </a></li>
+        <li class=""><a data-toggle="tab" href="#menu1"><span><i class="far fa-share-square"></i> {% trans "Transaction Fee Withdrawal" %}</span></a></li>
+        <li class=""><a data-toggle="tab" href="#menu2"><span><i class="far fa-share-square"></i> {% trans "Trade Fee" %}</span></a></li>
+      </ul>
+      <div class="tab-content">
+        <div id="home" class="tab-pane fade in active">
+          <div>
+            <table class="table table-striped table-bordered send_data_table" id="send_table" width="100%">
+              <thead>
+                <tr>
+                  <th>{% trans "Date&Time" %}</th>
+                  <th>{% trans "Status" %}</th>
+                  <th>{% trans "Amount" %}</th>
+                  <th>{% trans "Transaction Id" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+               {% for transaction in recive_list %}
+               <tr>
+                <td>{% conver_unix_to_datetime transaction.time %}</td>
+                <td>{% ifequal transaction.confirmations 0 %}
+                  {% trans "Unconfirmed" %}
+                  {% else %}
+                  {% trans "Confirmed" %}
+                  {% endifequal %}
+                </td>
+                <td>{{transaction.amount}}</td>
+                <td>{{transaction.txid}}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5"> {% trans "No Transactions" %}</td>
+              </tr>
+              {% endfor %}
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="menu1" class="tab-pane table-responsive fade">
+        <table class="table table-striped table-bordered" id="withdraw_table" width="100%">
+          <thead>
+            <tr>
+              <th>{% trans "Date&Time" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th>{% trans "Amount" %}</th>
+              <th>{% trans "Mining Fee" %}</th>
+              <th>{% trans "Transaction Id" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for send_obj in send_list %}
+            <tr>
+              <td>
+                {% if send_obj.transaction_id != '' %}
+                {% get_transaction_date send_obj.transaction_id %}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td>
+                {% if send_obj.transaction_id == '' %}
+                {% trans "Pending" %}
+                {% else %}
+                {% ifequal send_obj.transaction_id|get_transaction_status 0 %}
+                {% trans "Unconfirmed" %}
+                {% else %}
+                {% trans "Confirmed" %}
+                {% endifequal %}
+                {% endif %}
+              </td>
+              <td>{{send_obj.amount}}</td>
+              <td>{{send_obj.mining_fee}}</td>
+              <td>{{send_obj.transaction_id|default:"-"}}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5"> {% trans "No Transactions" %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div id="menu2" class="tab-pane table-responsive fade">
+        <table class="table table-striped table-bordered" id="withdraw_table" width="100%">
+          <thead>
+            <tr>
+              <th>{% trans "Date & Time" %}</th>
+              <th>{% trans "User" %}</th>
+              <th>{% trans "Trade Fee" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for trade_fee_obj in trade_fee %}
+            <tr>
+              <td>{{ trade_fee_obj.order_matching_time }}</td>
+              <td>{{ trade_fee_obj.processing_order.user.username}}</td>
+              <td>{{trade_fee_obj.trading_fee|floatformat:4}}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3"> {% trans "No fee history" %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+</div>
+{% endblock content %}
+
+{% block footer %}
+{% endblock %}
+{% block script %}
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#withdraw_table').DataTable({
+        });
+        $('#send_table').DataTable({
+            "scrollX": true,
+            "fixedHeader": false,
+        } );
+        $('.dataTables_info').parents('.row:first').css({'margin-top':'15px'})
+    } );
+</script>
+{% endblock %}

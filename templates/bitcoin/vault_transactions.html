@@ -1,0 +1,139 @@
+{% extends 'base.html' %}  
+{% load static %} 
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Vault Transactions" %}{% endblock %}
+
+{% block extra_styles %}
+      <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css">
+{% endblock %}
+
+
+{% block content %}
+
+  <div class="trans">
+
+
+
+    <div class="container-fluid">
+      <h2 class="Ubuntu mf15">{% trans "Vault Transactions" %}</h2>
+    </div>
+      <div class="row m0">
+        <div class="col-sm-12">
+         <div class="trans-details">
+           
+            <ul class="nav nav-tabs">
+              
+              <li class="active "><a data-toggle="tab" href="#home">  <span><i class="far fa-arrow-alt-circle-down"></i> {% trans "Deposit" %} </span> </a></li>
+              <li class=""><a data-toggle="tab" href="#menu1"><span><i class="far fa-share-square"></i> {% trans "Withdrawal" %}</span></a></li>
+
+            </ul>
+
+            <div class="tab-content">
+              <div id="home" class="tab-pane fade in active table-responsive">
+
+              <div>
+                  <table class="table table-striped table-bordered send_data_table" id="send_table" width="100%">
+        <thead>
+          <tr>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Amount" %}</th>
+            <th>{% trans "Public Key" %}</th>
+            <th>{% trans "User" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for send_obj in deposit_transaction %}
+      <tr>
+        <td>{{ send_obj.date|date:"d/m/Y H:i" }}</td>
+        <td>{{send_obj.amount|in_decimal}}</td>
+        <td>{{ send_obj.transaction_from }}</td>
+        <td>{{send_obj.user.username}}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5"> {% trans "No Transactions" %}</td>
+      </tr>
+      {% endfor %}
+        </tbody>
+      </table>
+    </div>
+              </div>
+              <div id="menu1" class="tab-pane fade table-responsive">
+             
+
+              <table class="table table-striped table-bordered" id="withdraw_table" width="100%">
+        <thead>
+          <tr>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Status" %}</th>
+          	<th>{% trans "Amount" %}</th>
+            <th>{% trans "Mining Fee" %}</th>
+          	<th>{% trans "Transaction Id" %}</th>
+            <th>{% trans "Address" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          	{% for send_obj in withdraw_transactions %}
+			<tr>
+        <td>{% get_transaction_date send_obj.transaction_id %}</td>
+        <td>
+          {% ifequal send_obj.transaction_id|get_transaction_status 0 %}
+              {% trans "Unconfirmed" %}
+          {% else %}
+              {% trans "Confirmed" %}
+          {% endifequal %}
+        </td>
+				<td>{{send_obj.amount}}</td>
+        <td>{{send_obj.mining_fee}}</td>
+				<td>{{send_obj.transaction_id}}</td>
+				<td>{{send_obj.transaction_to}}</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="5"> {% trans "No Transactions" %}</td>
+			</tr>
+			{% endfor %}
+        </tbody>
+      </table>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+{% endblock content %}
+
+{% block footer %}
+{% endblock %}
+{% block script %}
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+<script>
+    // $(document).ready(function() {
+    //     $('#withdraw_table').DataTable({
+    //     });
+    //     $('#send_table').DataTable({
+    //         "scrollX": true,
+    //         "fixedHeader": false,
+    //     } );
+    //     $('.dataTables_info').parents('.row:first').css({'margin-top':'15px'})
+    // } );
+</script>
+{% endblock %}

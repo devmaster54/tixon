@@ -1,0 +1,159 @@
+{% extends 'base.html' %} {% load static %}
+{% load i18n %}
+{% block title %}{% trans "Enter Phone Number" %}{% endblock %}
+
+{% block content %}
+
+<div class="disable-sms">
+    <div class="container">
+        <h2 class="Ubuntu">{% trans "Disable SMS Authentication" %}</h2>
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <div class="row disable-top">
+                    <div class="clearfix"></div>
+                    <div class="row m0 warning warning-msg">
+                        <div align="center" class="col-xs-2 fa">
+                            
+                        </div>
+                        <div class="col-xs-8">
+                            {% trans "You will receive an sms with verification code to the mobile number you have provided,
+                            Please enter it below." %}
+                        </div>
+                    </div>
+                    <div class="row m0 error warning-msg">
+                        <div align="center" class="col-xs-2 fa">
+                            
+                        </div>
+                        <div class="col-xs-8 msg-container">
+                            {% trans "You should receive an sms with a code after submit your phone number,
+                            please enter it below" %}
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="m10 d-block">{% trans "Mobile number" %}</label>
+                        <label class="m40 d-block hidden-xs">{% trans "Authentication Code" %}</label>
+                        <label class="m50 d-block hidden-xs">{% trans "Verify Your Login Password" %}</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <h4 class=" d-inline-block">{{request.user.phone_number}}</h4>
+                        <button onclick="send_otp()" class="btn pull-right btn-main "> {% trans "Send SMS" %}</button>
+                        <input required type="text" class="form-control m20" placeholder="{% trans "Authentication Code" %}" id="mobile_otp" onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;">
+                        <input required type="password" class="form-control m20" placeholder="{% trans "Verify Your Login Password" %}" id="user_password" onblur="this.setAttribute('readonly','');" onfocus="this.removeAttribute('readonly');" readonly style="cursor: text; background-color: #fff;">
+                    </div>
+
+                </div>
+
+                <div align="right" class="row disable-bottom">
+                    <button class="btn btn-main" onclick="disable_sms()" disabled id="disable-btn">{% trans "Disable" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal" style="background: rgba(11, 11, 11,0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+
+        <h3 class="Ubuntu">{% trans "SMS Authentication Disabled" %} </h3>
+        <h6 class="Ubuntu m0">{% trans "SMS authentication has been disabled successfully" %} </h6>
+
+        <div class="pop-footer">
+
+          <a href="{% url 'coins:settings' %}" class="btn btn-main"> {% trans "OK" %}</a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block footer %}
+{% endblock %}
+{% block script %}
+<script>
+  $.ajaxSetup({
+         beforeSend: function(xhr, settings) {
+             function getCookie(name) {
+                 var cookieValue = null;
+                 if (document.cookie && document.cookie != '') {
+                     var cookies = document.cookie.split(';');
+                     for (var i = 0; i < cookies.length; i++) {
+                         var cookie = jQuery.trim(cookies[i]);
+                         // Does this cookie string begin with the name we want?
+                         if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                             cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                             break;
+                         }
+                     }
+                 }
+                 return cookieValue;
+             }
+             if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                 // Only send the token to relative URLs i.e. locally.
+                 xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+             }
+         }
+    });
+
+    function send_otp(){
+    	$.ajax({
+            url: '{% url "disable_sms" %}',
+            method:'get',
+            dataType: 'json',
+            success: function (data) {
+              if (data.status) {
+                $('.warning-msg').hide()
+                $('.warning').show()
+                $('#disable-btn').prop('disabled', false);
+              }
+              else{
+                    console.log('llllllll')
+              }
+            }
+        });
+    }
+
+    function disable_sms(){
+      $('div.errorlist').remove();
+      if($('#mobile_otp').val() == ""){
+        $('#mobile_otp').after('<div class="errorlist">This field is required</div>');
+      }
+      if($('#user_password').val() == ""){
+        $('#user_password').after('<div class="errorlist">This field is required</div>');
+      }
+
+      if($('#user_password').val() == ""||$('#mobile_otp').val() == ""){
+        return
+      }
+      
+      $.ajax({
+            url: '{% url "disable_sms" %}',
+            method:'post',
+            data: {
+              'otp':$('#mobile_otp').val(),
+              'password':$('#user_password').val()
+            },
+            dataType: 'json',
+            success: function (data) {
+              if (data.status) {
+                console.log('success')
+                $('#modal').modal('show');
+                $('#redirect_url').attr('href', data.success_url);
+              }
+              else{
+                $('.warning-msg').hide()
+                $('.error>.msg-container').text(data.message)
+                $('.error').show()
+
+              }
+            }
+        });
+    }
+
+</script>
+{% endblock %}

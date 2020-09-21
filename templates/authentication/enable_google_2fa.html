@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Enable Google Authenticator" %}{% endblock %}
+
+{% block content %}
+<div class="google-auth">
+  <div class="container">
+   <h2 class="Ubuntu">{% trans "Enable Google Authenticator" %}</h2>
+   <div class="row">
+
+    <div class="col-sm-10 col-sm-offset-1">        
+      {% csrf_token %}
+      <div class="auth-wrapper">
+        <div class="row auth-head">
+
+          <h3 class="Ubuntu"><b>{% trans "Step 1" %}:</b> {% trans "Download Google Authenticator app" %}</h3>
+        </div>
+
+        <div class="row upload-wrap">
+
+          <div class="col-sm-8">
+
+           <div class="row m0">
+
+            <div class="col-sm-6">
+
+              <p class="m20"><b>{% trans "App Store" %}</b></p>
+                <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605">
+                  <img alt="Download on the app store" src="{% static 'img/apple.svg' %}" style="width:140px;height:67px;padding-top:1px;"/>
+                </a>
+
+              <!-- <input id="file-upload" type="file"/> -->
+
+
+            </div>
+
+            <div class="col-sm-6">
+
+              <p class="m20"><b>{% trans "Google Play" %}</b></p>
+                  <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">
+                    <img alt="Get it on Google Play" src="{% static 'img/playstore.png' %}" style="width:158px;height:71px;margin-left:-8px"/>
+                  </a>
+
+              <!-- <input id="file-upload" type="file"/> -->
+
+
+
+            </div>
+
+          </div> 
+
+
+
+        </div>
+
+      </div>
+
+
+    </div>
+    <div class="row auth-head">
+
+      <h3 class="Ubuntu"><b>{% trans "Step 2" %}:</b> {% trans "Scan the code" %}</h3>
+    </div>
+
+    <div class="row upload-wrap big-upload"> 
+     <div class="col-sm-6">
+       <label for="file-upload" class="custom-file-upload">
+        <canvas id="qr" style="width:53%"></canvas>
+
+        <p>{% trans "Secret Key" %} : {{user.google_2fa_key}}</p>
+      </label>
+
+
+    </div>
+
+    <div class="col-sm-6">
+
+      <h4 class="Ubuntu">{% trans "Please enter the 2FA code here" %}</h4>
+
+      <input id="otp" type="text" placeholder="{% trans "Example: 245-548" %}" name="otp" class="form-control" />
+
+    </div>
+
+  </div>
+
+  <div class="row upload-submit">
+
+    <button id="submit" class="btn btn-main" onclick="submit()">{% trans "Submit" %}</button>
+
+  </div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+<div id="success-model" style="background: #0b0b0bcc;" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+
+        <h3 class="Ubuntu">{% trans "2 Step Authentication has been" %} </h3>
+        <h3 class="Ubuntu m0" style="color: #48e543;">{% trans "successfully set up" %}</h3>
+
+          <div class="secounds Ubuntu "> {% trans "Redirecting to settings page in" %} <span class="counter-count"></span> {% trans "seconds" %}... </div>
+
+        <div class="pop-footer">
+
+          <a href="{% url 'coins:settings' %}" class="btn btn-main"> {% trans "OK" %}</a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="failure-model" style="background: #0b0b0bcc;" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+  <div class="modal-dialog modal-xs">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal"><img src="{% static 'img/close.png' %}"></button>
+        <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+
+        <p class="Ubuntu"><b>{% trans "Incorrect 2FA code, Please try again" %}.</b></p>
+        <br>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+    <footer>
+        <div class="footer-bottom">
+            © Designed by wwwebinvader
+        </div>
+    </footer>
+{% endblock %}
+
+{% block script %}
+  <script src="{% static 'js/qrious.js' %}"></script>
+  <script>
+  $(document).ready(function(){
+    var qr_url = "otpauth://totp/bullxchange:{{user.email}}?secret={{user.google_2fa_key}}&amp;issuer=bullxchange"
+    var qr = new QRious({
+      element: document.getElementById('qr'),
+      value: qr_url
+    });
+    qr.size = 500;
+  });
+  </script>
+
+  <script>
+   function submit(){
+      var otp = $('#otp').val();
+      if(otp == ""){
+        $('#otp').after('<div class="errorlist">This field is required</div>');
+        return
+      }
+      $.get("{% url 'ajax_enable_2fa' %}?otp="+ otp, function(data, status){
+          if(data.status){
+            $('#success-model').modal('show');
+            var counter = 5;
+            var interval = setInterval(function() {
+                counter--;
+                $('.counter-count').text(counter)
+                // Display 'counter' wherever you want to display it.
+                if (counter == 0) {
+                    // Display a login box
+                    window.location.href = "{% url 'coins:settings' %}"
+                    clearInterval(interval);
+                }
+            }, 1000);
+          }else{
+            $('#failure-model').modal('show');
+          }
+      });
+   }
+  </script>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}  
+{% load static %}
+{% load transaction_status %}
+{% load i18n %}
+{% block title %}{% trans "Sell Orders" %}{% endblock %}
+
+{% block content %}
+<div class="trans">
+  <div class="container">
+    <h2 class="Ubuntu mf15">{% trans "Sell Orders" %}</h2>
+    <div class="row m0">
+      <div class="col-sm-12">
+       <div class="trans-details">
+        <div class="tab-content">
+            <div class="table-responsive">
+              <table class="table table_template darklinks table-striped table-bordered table-hover" id="timetable">
+                <thead>
+                  <tr>
+                   <th>{% trans "Date &amp; Time" %}</th>
+                   <th>{% trans "Amount" %}</th>
+                   <th>{% trans "Price" %}</th>
+                   <th>{% trans "Trigger" %}</th>
+                   <th>{% trans "Fee" %}</th>
+                   <th>{% trans "Order Mode" %}</th>
+                   <th>{% trans "Filled" %}</th>
+                   <th>{% trans "Trade Status" %}</th>
+                   <th>{% trans "Action" %}</th>
+                 </tr>
+               </thead>
+               <tbody>
+
+                {% for obj in sell_order_list %}
+                <tr>
+                  <td>{{obj.order_time}}</td>
+                  <td>{{ obj.amount }}</td>
+                  <td>{{ obj.price }}</td>
+                  <td>{% if obj.order_mode == "2" %}{{obj.limit}}{% else %}-{% endif %}</td>
+                  <td>{{ obj.trading_fee|floatformat:'3' }}</td>
+                  <td>{{ obj.get_order_mode_display }}</td>
+                  <td>{% percentage_completed obj.coins_covered obj.amount %}%</td>
+                  <td>
+                    {% if obj.amount == obj.coins_covered %}
+                      {% trans "Completed" %}
+                    {% else %}
+                      {{ obj.trade_status|yesno:"Canceled,Pending" }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if obj.trade_status == False %}
+                      <a href="javascript:void(0)" class="btn btn-danger" onclick="removeOrder('{{obj.pk}}')">{% trans "Cancel" %}</a>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="9"> {% trans "No Sell Orders" %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+ <div id="success-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body m50 text-center">
+                <img class="m30" src="{% static 'img/succes-thumb.png' %}" width="40%">
+                <h3 class="Ubuntu">{% trans "Success" %}</h3>
+                &nbsp;
+                <h6 class="Ubuntu m0">{% trans "Order cancelled" %}</h6>
+                &nbsp;
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+                <a style="" href="{% url 'coins:sell_order_list' %}" class="btn btn-main">{% trans "OK" %}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="error-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+  <div class="modal-dialog modal-xs">
+      <div class="modal-content">
+          <div class="modal-body" style="padding: 50px 10px">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+              <h4 class="Ubuntu m0">{% trans "Order can not found" %}.</h4>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div id="confirm-modal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+  <div class="modal-dialog modal-xs">
+      <div class="modal-content">
+          <div class="modal-body" style="padding: 50px 10px">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <img class="m30" src="{% static 'img/important.png' %}" width="40%">
+              <h4 class="Ubuntu m0">{% trans "Are you sure to cancel this order ?" %}</h4>
+          </div>
+          <div class="pop-footer" style="text-align: center;">
+                <a style="" href="javascript:void(0)" onclick="confirmRemoval()" class="btn btn-main">{% trans "yes" %}</a>
+            </div>
+      </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block script %}
+<script>
+  var orderId;
+  function removeOrder(pk){
+    orderId = pk;
+    $('#confirm-modal').modal('show');
+  }
+
+  function confirmRemoval(){
+    $('#confirm-modal').modal('hide');    
+    $.ajax({
+      url: "/crypto/delete-order/"+orderId+"/",
+
+      success : function(result){
+        if(result.success){
+          $('#success-modal').modal('show');
+        }else{
+          $('#error-modal').modal('show');
+        }
+      }
+    });
+
+  }
+</script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

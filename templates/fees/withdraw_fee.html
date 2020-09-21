@@ -1,0 +1,245 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% load transaction_status %} 
+{% load i18n %}
+{% block title %}{% trans "Fees Withdrawal" %}{% endblock %}
+
+
+{% block content %}
+
+<div class="send-coin ">
+    <div class="container">
+        <h2 class="Ubuntu mb20">{% trans "Fees Withdrawal" %}</h2>
+        <div class="row mb50 send-coin-wrap">
+            <div class="row m0">
+                <h4 class="m30"> <b>{% trans "Your BTC wallet details" %}</b> </h4>
+                <div class="row m0 wallet-details">
+                    <div class="col-sm-6">
+                        <img class="d-inline-block" src="{% static 'img/bitcoin.png' %}" width="40px">
+                        <p class="d-inline-block mf10"><b>BTC</b></p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="m10 f-medium" align="right">{% trans "Collected Fees Balance" %}: {% fee_balance %} BTC</p>
+                    </div>
+                </div>
+                <div class="">
+                    <h4 class="m30"><b>{% trans "Recipient Address" %}</b></h4>
+                    <div class="form-group">
+                        <input type="text" name="" class="form-control wallet-send-coin-addr"  placeholder="{% trans "Enter the recipient wallet address" %}">
+                    </div>
+                    <h4 class="m30"><b>{% trans "Amount to transfer" %}</b></h4>
+                    <div class="form-group">
+                        <input id="transfer-amt" oninput="getAmount(this.value)" type="number" name="" class="form-control wallet-send-coin-amt"  placeholder="{% trans "Enter the Amount to send" %}">
+                    </div>
+                    <div align="right">
+                        <a href="{% url 'welcome' %}" type="button" class="btn-back btn m20 pull-left"> <i class="fas fa-arrow-left"></i> {% trans "BACK TO DASHBOARD" %}</a>
+                        <button type="button" class="btn-main btn m20" onclick="send()">  {% trans "CONFIRM" %} </button>
+                    </div>
+                </div>
+                <div class="">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+    <div id="successModal" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <img class="m30" src="{% static 'img/important.png' %}" width="40%">
+                    <h3 class="Ubuntu">{% trans "Important" %}</h3>
+                    &nbsp;
+                    <h6 class="Ubuntu m0">{% trans "An email has been send to you. Please click on the link in the email to confirm the withdrawal" %}</h6>
+                    &nbsp;
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <a style="" href="{% url 'welcome' %}" class="btn btn-main">{% trans "OK" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="confirm_Send" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+        <div class="modal-dialog modal-xs">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">{% trans "Confirm" %}</h4>
+                </div>
+                <div class="modal-body">
+                    <span>{% trans "Recipient Address" %}: </span><span id="to_span"></span>
+                    <br>
+                    <span>{% trans "Recipient recieves" %}:</span><span id="amount_span">0.00000</span><span>BTC</span>
+                    <br>
+
+                    <span>{% trans "Confirm Transaction?" %}</span>
+                </div>
+                <div class="pop-footer" style="text-align: center;">
+                    <button style="width:150px" type="button" class="btn btn-upload" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" onclick="sendConfirm()"  class="btn btn-default" style="width: 200px;margin: 0px 11px;">{% trans "Submit" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+  <div id="message-model" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding: 50px 10px;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <img class="m30" src="{% static 'img/thumb-down.png' %}" width="40%">
+                <h4 class="Ubuntu m0">{% trans "Please ensure that the input fields have values" %}.</h4>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="otp-model" style="background: rgba(11, 11, 11, 0.8);" class="modal bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="static">
+    <div class="modal-dialog modal-xs">
+        <div class="modal-content">
+            <div class="modal-body" style="padding-top: 40px;">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="message-text"> {% trans "Enter SMS OTP" %}</h4>
+                <input name="otp"/>
+            </div>
+            <div class="pop-footer" style="text-align: center;">
+                <button type="button" onclick="sendOTP()" class="btn btn-default" style="width: 200px;margin: 0px 11px;">{% trans "Submit" %}</button>
+                <button type="button" onclick="resendOTP()" class="send-otp-btn btn btn-default" style="width: 200px;margin: 0px 11px;">{% trans "Resend" %}</button>
+            </div>
+        </div>
+    </div>
+  </div>
+  <!-- <img id="loader" src="{% static 'img/ajax-loader.gif' %}" style="position: absolute;top: 50%;left: 50%;"> -->
+{% endblock content %}
+
+
+
+{% block script %} 
+<script type="text/javascript">
+
+function send(){
+    address = $(".wallet-send-coin-addr").val();
+    amount = $(".wallet-send-coin-amt").val();
+
+    if(!amount || !address){
+        $("#message-model h4").text('Please ensure that the input fields have values.');
+        $("#message-model").modal("show");
+    }else{
+        $.ajax({
+            type: "POST",
+            url: window.location.pathname,
+            data: {
+                'to': address,
+                'amount': amount,
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            // beforeSend: function(){
+            //     $("#loader").show();
+            // },
+            success: function (data) {
+                if (data['success']) {
+                    $("#to_span").text(address);
+                    $("#amount_span").text($(".wallet-send-coin-amt").val());
+                    $("#confirm_Send").modal("show")
+                }
+                else{
+                    $("#message-model h4").text(data['error']);
+                    $("#message-model").modal("show");
+                }
+            },
+            // complete:function(data){
+            //         $("#loader").hide();
+            //    }
+        })
+    }
+}
+
+function sendConfirm(){
+    address = $(".wallet-send-coin-addr").val();
+    amount = $(".wallet-send-coin-amt").val();
+    $("#confirm_Send").modal("hide");
+    $.ajax({
+        type: "POST",
+        url: "{% url 'fees:withdraw-fee-confirm' %}",
+        data: {
+            'to': address,
+            'amount': amount,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+        },
+        success: function (data) {
+            if(data['status'] == 'get-otp'){
+                $("#otp-model .message-text").html('Enter SMS OTP');
+                $("#otp-model .send-otp-btn").show();
+                $('#otp-model input').val('');
+                $("#otp-model").modal("show");
+            }else if(data['status'] == 'get-totp'){
+                $("#otp-model .message-text").html('Enter Google Authentication Code')
+                $("#otp-model .send-otp-btn").hide();
+                $('#otp-model input').val('');
+                $("#otp-model").modal("show");
+            }else if(data['error']){
+                $("#message-model .modal-body h4").html(data['error']);
+                $("#message-model").modal("show");
+            }else{
+                $("#successModal").modal("show");
+            }
+        }
+    });
+}
+
+function sendOTP(){
+    var value = $('#otp-model input').val();
+    $.ajax({
+        type: "POST",
+        url: "{% url 'fees:withdraw-fee-confirm' %}",
+        data: {
+            'value': value,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+        },
+        success: function (data) {
+            $("#otp-model, #message-model, #successModal").modal("hide");
+            $("#otp-model .send-otp-btn").hide();
+            $('#otp-model input').val('');
+
+            if(data['success'] == true){
+                $("#successModal").modal("show");
+            }else if(data['status'] == 'otp-not-verified'){
+                $("#otp-model .message-text").html('Invalid OTP. Try again.')
+                $("#otp-model .send-otp-btn").show();
+                $("#otp-model").modal("show");
+            }else if(data['status'] == 'get-totp'){
+                $("#otp-model .message-text").html('Enter Google Authentication Code')
+                $("#otp-model").modal("show");
+            }else if(data['status'] == 'totp-not-verified'){
+                $("#otp-model .message-text").html('Invalid Google Authentication Code. Try again.')
+                $("#otp-model").modal("show");
+            }else if(data['error']){
+                $("#message-model .modal-body h4").html(data['error']);
+                $("#message-model").modal("show");
+            }
+        }
+    });
+}
+
+function resendOTP(){
+    $.ajax({
+        type: "POST",
+        url: "{% url 'fees:withdraw-fee-confirm' %}",
+        data: {
+            'resend-otp': true,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+        }
+    });
+}
+</script>
+
+{% endblock script %}
+
+{% block footer %}
+{% endblock %}
